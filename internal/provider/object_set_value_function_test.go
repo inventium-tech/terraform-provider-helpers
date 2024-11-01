@@ -32,7 +32,7 @@ func TestObjectSetValueFunction(t *testing.T) {
 	}
 	mockTerraformLocalsTestObject := `locals {
 		test_object = { key1 = "value1", key2 = true, key3 = 3, key4 = "", key5 = null }
-	`
+	}`
 
 	resource.UnitTest(t, resource.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
