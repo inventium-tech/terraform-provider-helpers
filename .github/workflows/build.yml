@@ -85,7 +85,6 @@ jobs:
       matrix:
         tf-version:
           - '1.8.*'
-          - '1.9.*'
     steps:
       - name: Checkout 💻
         uses: actions/checkout@v4.1.7
