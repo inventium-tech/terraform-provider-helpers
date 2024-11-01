@@ -1,0 +1,35 @@
+---
+page_title: "Provider: Helpers"
+---
+
+# Helpers Provider
+
+The Helpers Provider for Terraform is a utility provider that offers a handy set of functions that can be used in your
+Terraform configurations.
+
+The Helpers Provider function are a good complement to the Terraform built-in functions and can be used to expand
+the language capabilities. This provider does not manage any resources or data sources.
+
+Use the navigation to the left to read about the available functions.
+
+## Example Usage
+
+Starting from Terraform 1.8 the providers can implement custom "functions" that can be used in the configuration.
+
+Make sure you have the Helpers Provider declared inside the `required_providers {}` in the `terraform {}` block:
+
+{{ tffile "examples/provider/provider.tf" }}
+
+## Function Syntax
+
+In order to use the functions provided by the Helpers Provider, you need to use the following syntax:
+
+`provider::helpers::<function_name>`
+
+For example, to use the `object_set_value` function you would do it like the following:
+
+```terraform
+output "test_object_set_value" {
+  value = provider::helpers::object_set_value(local.target_object, "key1", "new_value", "write_all")
+}
+```

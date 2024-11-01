@@ -1,0 +1,56 @@
+name: codeql
+run-name: '❇️ CodeQL Scan - ${{ github.ref_name }}'
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'assets/**'
+      - 'docs/**'
+      - 'examples/**'
+  pull_request_target:
+    branches:
+      - dev
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths-ignore:
+      - 'README.md'
+      - 'assets/**'
+      - 'docs/**'
+      - 'examples/**'
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  codeql:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      # required for all workflows
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - go
+    steps:
+      - name: Checkout 💻
+        uses: actions/checkout@v4.1.7
+
+      - name: Initialize CodeQL ⚙️
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: CodeQL Analysis ❇️
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{matrix.language}}'

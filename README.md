@@ -4,16 +4,16 @@
 
 ---
 
-[![Golang][shield-golang]]
-[![Terraform][shield-terraform]]
+![Golang][shield-golang]
+![Terraform][shield-terraform]
 
-[![🛠️ Build Workflow][badge-gh-action-build][link-gh-action-build]]
-[![🔎 MegaLinter][badge-gh-action-megalinter][link-gh-action-megalinter]]
-[![❇️ CodeQL][badge-gh-action-codeql][link-gh-action-codeql]]
+![🛠️ Build Workflow][badge-gh-action-build][link-gh-action-build]
+![🔎 MegaLinter][badge-gh-action-megalinter][link-gh-action-megalinter]
+![❇️ CodeQL][badge-gh-action-codeql][link-gh-action-codeql]
 
-[![GitHub language count][shield-lang-count]]
-[![GitHub Actions Workflow Status][shield-gh-action-status]]
-[![GitHub License][shield-license]]
+![GitHub language count][shield-lang-count]
+![GitHub Actions Workflow Status][shield-gh-action-status]
+![GitHub License][shield-license]
 
 <h2>📋 Table of Contents</h2>
 
@@ -37,8 +37,7 @@ Terraform Registry.
 
 ## Example Usage
 
-```terraform
-terraform {
+```terraformterraform {
   required_providers {
     helpers = {
       source = "inventium-tech/helpers"
