@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
@@ -21,7 +20,7 @@ func (m mockTFObjectPartial) modify(t *testing.T, key string, value knownvalue.C
 	return result
 }
 
-func TestObjectSetValueFunction_Run(t *testing.T) {
+func TestObjectSetValueFunction(t *testing.T) {
 	t.Parallel()
 
 	mockObject := mockTFObjectPartial{
@@ -31,7 +30,9 @@ func TestObjectSetValueFunction_Run(t *testing.T) {
 		"key4": knownvalue.StringExact(""),
 		"key5": knownvalue.Null(),
 	}
-	mockObjectString := `{ key1 = "value1", key2 = true, key3 = 3, key4 = "", key5 = null }`
+	mockTerraformLocalsTestObject := `locals {
+		test_object = { key1 = "value1", key2 = true, key3 = 3, key4 = "", key5 = null }
+	`
 
 	resource.UnitTest(t, resource.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
@@ -42,7 +43,7 @@ func TestObjectSetValueFunction_Run(t *testing.T) {
 			{
 				// test "write_all" operation mode
 				Config: `` +
-					fmt.Sprintf("locals { test_object = %s }\n", mockObjectString) + `
+					mockTerraformLocalsTestObject + `
 			
 					output "expect_value_change" { value = provider::helpers::object_set_value(local.test_object, "key1", "new_value", "write_all") }
 			
@@ -58,7 +59,7 @@ func TestObjectSetValueFunction_Run(t *testing.T) {
 			{
 				// test "write_value" operation mode
 				Config: `` +
-					fmt.Sprintf("locals { test_object = %s }\n", mockObjectString) + `
+					mockTerraformLocalsTestObject + `
 			
 					output "expect_value_change" { value = provider::helpers::object_set_value(local.test_object, "key1", "new_value", "write_value") }
 			
@@ -74,7 +75,7 @@ func TestObjectSetValueFunction_Run(t *testing.T) {
 			{
 				// test "write_safe" operation mode
 				Config: `` +
-					fmt.Sprintf("locals { test_object = %s }\n", mockObjectString) + `
+					mockTerraformLocalsTestObject + `
 
 					output "expect_value_change_1" { value = provider::helpers::object_set_value(local.test_object, "key4", "new_value", "write_safe") }
 

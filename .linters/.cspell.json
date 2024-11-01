@@ -1,0 +1,24 @@
+{
+  "language": "en",
+  "noConfigSearch": true,
+  "words": ["megalinter", "oxsecurity"],
+  "dictionaries": ["project-dict", "go", "filetypes", "softwareTerms", "misc"],
+  "dictionaryDefinitions": [
+    {
+      "name": "project-dict",
+      "path": "./project-dict.txt",
+      "useCompounds": true
+    }
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/vscode-extension/**",
+    "**/.git/**",
+    "**/.pnpm-lock.json",
+    ".vscode",
+    "megalinter",
+    "package-lock.json",
+    "report",
+    ".ml-reports/**"
+  ]
+}

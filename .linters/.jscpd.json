@@ -1,0 +1,20 @@
+{
+  "threshold": 20,
+  "minLines": 15,
+  "reporters": ["html", "markdown"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/.rbenv/**",
+    "**/.venv/**",
+    "**/*cache*/**",
+    "**/.github/**",
+    "**/.idea/**",
+    "**/report/**",
+    "**/.ml-reports/**",
+    "**/*.svg",
+    "**/*_test.go",
+    "./examples/**",
+    "./docs/**"
+  ]
+}

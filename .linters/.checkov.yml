@@ -1,0 +1,3 @@
+compact: true # For the CLI output, do not display code blocks
+quiet: true # For the CLI output, display only failed checks. Also disables progress bars
+evaluate-variables: true

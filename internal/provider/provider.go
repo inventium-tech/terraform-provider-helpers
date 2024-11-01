@@ -20,12 +20,12 @@ type HelpersProvider struct {
 	version string
 }
 
-func (h *HelpersProvider) Metadata(ctx context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
+func (h *HelpersProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "helpers"
 	resp.Version = h.version
 }
 
-func (h *HelpersProvider) Schema(ctx context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (h *HelpersProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes:  map[string]schema.Attribute{},
 		Description: "The Helpers Provides offers a set of functions to help with common tasks.",
@@ -46,7 +46,7 @@ func (h *HelpersProvider) Resources(ctx context.Context) []func() resource.Resou
 	return nil
 }
 
-func (h *HelpersProvider) Functions(ctx context.Context) []func() function.Function {
+func (h *HelpersProvider) Functions(_ context.Context) []func() function.Function {
 	return []func() function.Function{
 		NewObjectSetValueFunction,
 	}

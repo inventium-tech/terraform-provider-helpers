@@ -7,9 +7,9 @@
 ![Golang][shield-golang]
 ![Terraform][shield-terraform]
 
-![🛠️ Build Workflow][badge-gh-action-build][link-gh-action-build]
-![🔎 MegaLinter][badge-gh-action-megalinter][link-gh-action-megalinter]
-![❇️ CodeQL][badge-gh-action-codeql][link-gh-action-codeql]
+[![🛠️ Build Workflow][badge-gh-action-build]][link-gh-action-build]
+[![🔎 MegaLinter][badge-gh-action-megalinter]][link-gh-action-megalinter]
+[![❇️ CodeQL][badge-gh-action-codeql]][link-gh-action-codeql]
 
 ![GitHub language count][shield-lang-count]
 ![GitHub Actions Workflow Status][shield-gh-action-status]
@@ -25,15 +25,15 @@
 
 # 🧰 Terraform Provider: Helpers Functions
 
-This is a Terraform Provider only for Helper functions. The main idea is to extend the built-in functionalities of 
+This is a Terraform Provider only for Helper functions. The main idea is to extend the built-in functionalities of
 Terraform with some functions that are not available by default and can be useful in some scenarios.
 
-For a detailed examples and documentation check inside the [docs](./docs/index.md) folder or directly in the 
+For a detailed examples and documentation check inside the [docs](./docs/index.md) folder or directly in the
 Terraform Registry.
 
 ## Available Functions
 
-- [object_set_value](./docs/functions/object_set_value.md)
+* [object_set_value](./docs/functions/object_set_value.md)
 
 ## Example Usage
 
@@ -67,7 +67,6 @@ output "write_all_operation" {
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" alt="Buy Me A Coffee"
     style="height: 60px !important;width: 217px !important;">
 </a>
-
 
 <!-- MARKDOWN LINKS & IMAGES -->
 [shield-golang]: <https://img.shields.io/badge/-Golang-black?style=for-the-badge&logoColor=white&logo=go&color=00ADD8>

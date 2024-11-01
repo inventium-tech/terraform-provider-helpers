@@ -17,11 +17,11 @@ func NewObjectSetValueFunction() function.Function {
 	return &ObjectSetValueFunction{}
 }
 
-func (c ObjectSetValueFunction) Metadata(ctx context.Context, req function.MetadataRequest, resp *function.MetadataResponse) {
+func (c ObjectSetValueFunction) Metadata(_ context.Context, _ function.MetadataRequest, resp *function.MetadataResponse) {
 	resp.Name = "object_set_value"
 }
 
-func (c ObjectSetValueFunction) Definition(ctx context.Context, req function.DefinitionRequest, resp *function.DefinitionResponse) {
+func (c ObjectSetValueFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Sets a value in an Object or creates a new key with the value",
 		Parameters: []function.Parameter{

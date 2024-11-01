@@ -1,0 +1,31 @@
+# Visit https://golangci-lint.run/ for usage documentation
+# and information on other useful linters
+issues:
+  max-issues-per-linter: 30
+  max-same-issues: 0
+  exclude-rules:
+    - path: '(.+)_test\.go'
+      linters:
+        - unparam
+        - forcetypeassert
+
+linters:
+  disable-all: true
+  enable:
+    - durationcheck
+    - errcheck
+    - forcetypeassert
+    - godot
+    - gofmt
+    - gosimple
+    - govet
+    - ineffassign
+    - makezero
+    - misspell
+    - nilerr
+    - predeclared
+    - staticcheck
+    - tenv
+    - unconvert
+    - unparam
+    - unused

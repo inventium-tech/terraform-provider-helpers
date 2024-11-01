@@ -1,0 +1,55 @@
+# Configuration file for MegaLinter
+#
+# See all available variables at https://megalinter.io/latest/config-file/ and in linters documentation
+
+# all, none, or list of linter keys
+APPLY_FIXES: # all, none, or list of linter keys
+  - JSON_PRETTIER
+  - YAML_YAMLLINT
+ENABLE_LINTERS: # If you use ENABLE_LINTERS variable, all other linters will be disabled by default
+  - COPYPASTE_JSCPD               # https://megalinter.io/latest/descriptors/copypaste_jscpd/
+  #  - GO_GOLANGCI_LINT              # https://megalinter.io/latest/descriptors/go_golangci_lint/ # missing support for Go 1.23
+  - GO_REVIVE                     # https://megalinter.io/latest/descriptors/go_revive/
+  - JSON_PRETTIER                 # https://megalinter.io/latest/descriptors/json_prettier/
+  - MARKDOWN_MARKDOWN_LINK_CHECK  # https://megalinter.io/latest/descriptors/markdown_markdown_link_check/
+  - MARKDOWN_MARKDOWNLINT         # https://megalinter.io/latest/descriptors/markdown_markdownlint/
+  - REPOSITORY_CHECKOV            # https://megalinter.io/latest/descriptors/repository_checkov/
+  - SPELL_CSPELL                  # https://megalinter.io/latest/descriptors/spell_cspell/
+  - YAML_YAMLLINT                 # https://megalinter.io/latest/descriptors/yaml_yamllint/
+
+CLEAR_REPORT_FOLDER: true
+CONFIG_PROPERTIES_TO_APPEND:
+  - ADDITIONAL_EXCLUDED_DIRECTORIES
+CONFIG_REPORTER: false
+FAIL_IF_MISSING_LINTER_IN_FLAVOR: true
+FORMATTERS_DISABLE_ERRORS: false
+IGNORE_GENERATED_FILES: true
+LINTER_RULES_PATH: .linters
+PRINT_ALPACA: false
+REPORT_OUTPUT_FOLDER: /tmp/lint/.ml-reports
+SHOW_ELAPSED_TIME: true
+UPDATED_SOURCES_REPORTER: false
+
+ADDITIONAL_EXCLUDED_DIRECTORIES:
+  - '.archived'
+  - 'docs'
+  - 'examples'
+  - '.git'
+  - '.linters'
+  - '.vscode'
+  - '.idea'
+
+# MARKDOWN_MARKDOWNLINT variables
+MARKDOWN_MARKDOWNLINT_CONFIG_FILE: .markdownlint.yml
+
+# YAML_YAMLLINT variables
+YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
+
+# JSON_PRETTIER variables
+JSON_PRETTIER_CONFIG_FILE: .prettierrc.yml
+
+# GO_REVIVE
+GO_REVIVE_CONFIG_FILE: .revive.toml
+
+# GO_GOLANGCI_LINT
+GO_GOLANGCI_LINT_CONFIG_FILE: .golangci.yml

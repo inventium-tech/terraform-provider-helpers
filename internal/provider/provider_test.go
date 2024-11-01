@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 )
@@ -12,19 +11,4 @@ import (
 // reattach.
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 	"helpers": providerserver.NewProtocol6WithError(NewProvider("test")()),
-}
-
-func testWrap() {
-	x := map[string]interface{}{
-		"keyOne":   "valueOne",
-		"keyTwo":   2,
-		"keyThree": true,
-	}
-	var qwe []interface{}
-
-	for key, value := range x {
-		qwe = append(qwe, fmt.Sprintf("%v = %v", key, value))
-	}
-	str := fmt.Sprintf("%v", x)
-	fmt.Println(str)
 }
