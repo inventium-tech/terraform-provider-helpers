@@ -24,6 +24,7 @@ func (c ObjectSetValueFunction) Metadata(_ context.Context, _ function.MetadataR
 func (c ObjectSetValueFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Sets a value in an Object or creates a new key with the value",
+
 		Parameters: []function.Parameter{
 			function.DynamicParameter{
 				Name:               "object",
@@ -53,6 +54,7 @@ func (c ObjectSetValueFunction) Definition(_ context.Context, _ function.Definit
 				},
 			},
 		},
+
 		Return: function.DynamicReturn{},
 	}
 }
@@ -63,8 +65,8 @@ func (c ObjectSetValueFunction) Run(ctx context.Context, req function.RunRequest
 	var value types.Dynamic
 	var operation string
 
-	resp.Error = function.ConcatFuncErrors(req.Arguments.Get(ctx, &object, &key, &value, &operation))
-	if resp.Error != nil {
+	if err := req.Arguments.Get(ctx, &object, &key, &value, &operation); err != nil {
+		resp.Error = err
 		return
 	}
 
@@ -76,17 +78,13 @@ func (c ObjectSetValueFunction) Run(ctx context.Context, req function.RunRequest
 
 	if _, ok := attrValues[key]; ok {
 		isCurrentValueNull = attrValues[key].IsNull() || attrValues[key].Equal(basetypes.NewStringValue(""))
-		//asNull := attrValues[key].IsNull()
-		//asString := attrValues[key].Equal(basetypes.NewStringValue(""))
-		//isCurrentValueNull = asNull || asString == ""
-		//isCurrentValueNull = attrValues[key].IsNull() || attrValues[key].String() == ""
 		keyExists = true
 	}
 
 	attrTypes[key] = value.UnderlyingValue().Type(ctx)
 	attrValues[key] = value.UnderlyingValue()
 
-	var result basetypes.ObjectValue
+	var result types.Object
 	var diags diag.Diagnostics
 
 	isWriteSafeOp := operation == "write_safe" && keyExists && isCurrentValueNull
