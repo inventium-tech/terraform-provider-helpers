@@ -1,0 +1,41 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: "Collection Functions"
+description: |-
+  {{ .Summary | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Type | title }}: {{.Name}}
+
+{{ .Summary | trimspace }}
+
+The function `collection_filter` can be used, as indicated by the name, to quickly filter a collection of values.
+Terraform does not offer out-of-the-box such functionality in a direct way, with the only reasonable solution of loop
+through the collection and perform the filtering.
+
+In the current version the function is able to filter collection of primitives (number, bool, string) and objects, with
+the last one able to also filter by a nested attribute. The filter right now is only using an "equal" check operation,
+however, we might put some effort in the future to support different operators.
+
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{tffile .ExampleFile }}
+{{- end }}
+
+## Signature
+
+{{ .FunctionSignatureMarkdown }}
+
+## Arguments
+
+{{ .FunctionArgumentsMarkdown }}
+{{ if .HasVariadic -}}
+{{ .FunctionVariadicArgumentMarkdown }}
+{{- end }}
+
+## Return Type
+
+The signature shows a dynamic type of return because in order to support multiple types of collections the return must
+be specified in such way. You can always expect a collection of the same type as used in the input.

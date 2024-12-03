@@ -49,6 +49,8 @@ func (h *HelpersProvider) Resources(ctx context.Context) []func() resource.Resou
 func (h *HelpersProvider) Functions(_ context.Context) []func() function.Function {
 	return []func() function.Function{
 		NewObjectSetValueFunction,
+		NewCollectionFilterFunction,
+		NewOsGetEnvFunction,
 	}
 }
 
