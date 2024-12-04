@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -130,26 +129,4 @@ func FlatObjectMap(ctx context.Context, elements map[string]attr.Value) map[stri
 		}
 	}
 	return flatMap
-}
-
-func MapLookup(ctx context.Context, m map[string]attr.Value, ks ...string) (r attr.Value, err error) {
-	var ok bool
-	var match interface{}
-	var nestedMap map[string]attr.Value
-
-	if len(ks) == 0 { // degenerate input
-		return nil, fmt.Errorf("NestedMapLookup needs at least one key")
-	}
-	if r, ok = m[ks[0]]; !ok {
-		return nil, fmt.Errorf("key not found; remaining keys: %v", ks)
-	} else if len(ks) == 1 { // we've reached the final key
-		return r, nil
-	} else if r.Type(ctx).Equal(types.DynamicType) && !r.(types.Dynamic).UnderlyingValue().Type(ctx).Equal(types.TupleType{}) {
-		nestedMap = r.(types.Dynamic).UnderlyingValue().(types.Object).Attributes()
-		return r, nil
-	} else if nestedMap, ok = match.(map[string]attr.Value); !ok {
-		return nil, fmt.Errorf("malformed structure at %#v", match)
-	} else { // 1+ more keys
-		return MapLookup(ctx, nestedMap, ks[1:]...)
-	}
 }

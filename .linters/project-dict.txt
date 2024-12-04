@@ -2,12 +2,12 @@ basetypes
 coverprofile
 datasource
 durationcheck
+dynamicvalidator
 errcheck
 exportloopref
 forcetypeassert
 goarch
 gofmt
-GOLANGCI
 golangci
 gomod
 goreleaser
@@ -18,7 +18,6 @@ inventium
 knownvalue
 ldflags
 makezero
-MARKDOWNLINT
 markdownlint
 megalinter
 nilerr
@@ -36,8 +35,11 @@ terraformterraform
 tflog
 tfplugindocs
 tfprotov
+tftypes
 tfversion
 trimpath
 unconvert
 unparam
+validatorfuncerr
 venv
+xslices
