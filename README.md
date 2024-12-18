@@ -33,7 +33,14 @@ Terraform Registry.
 
 ## Available Functions
 
-* [object_set_value](./docs/functions/object_set_value.md)
+**Collection Functions:**
+* [collection_filter](./docs/functions/collection_filter.md): Filter collection of objects.
+
+**Object Functions:**
+* [object_set_value](./docs/functions/object_set_value.md): Sets a value in an Object or creates a new key with the value.
+
+**OS Functions:**
+* [os_get_env](./docs/functions/os_get_env.md): Read an environment variable.
 
 ## Example Usage
 
