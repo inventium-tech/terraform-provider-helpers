@@ -51,6 +51,25 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 release:
+  # If set to true, will not auto-publish the release.
+  # Note: all GitHub releases start as drafts while artifacts are uploaded.
+  # Available only for GitHub and Gitea.
+  draft: true
+
+  # This allows to change which tag GitHub will create.
+  tag: "{{ .CurrentTag }}"
+
+  # What to do with the release notes in case there the release already exists.
+  #
+  # Valid options are:
+  # - `keep-existing`: keep the existing notes
+  # - `append`: append the current release notes to the existing notes
+  # - `prepend`: prepend the current release notes to the existing notes
+  # - `replace`: replace existing notes
+  #
+  # Default: `keep-existing`.
+  mode: append
+
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
