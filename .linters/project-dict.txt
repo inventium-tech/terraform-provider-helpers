@@ -6,6 +6,7 @@ dynamicvalidator
 errcheck
 exportloopref
 forcetypeassert
+gitea
 goarch
 gofmt
 golangci

@@ -76,4 +76,40 @@ release:
   # If you want to manually examine the release before its live, uncomment this line:
   # draft: true
 changelog:
-  disable: true
+  disable: false
+
+  # Changelog generation implementation to use.
+  #
+  # Valid options are:
+  # - `git`: uses `git log`;
+  # - `github`: uses the compare GitHub API, appending the author username to the changelog.
+  # - `gitlab`: uses the compare GitLab API, appending the author name and email to the changelog (requires a personal access token).
+  # - `gitea`: uses the compare Gitea API, appending the author username to the changelog.
+  # - `github-native`: uses the GitHub release notes generation API, disables the groups feature.
+  #
+  # Default: 'git'.
+  use: github
+
+  # Sorts the changelog by the commit's messages.
+  # Could either be asc, desc or empty
+  # Empty means 'no sorting', it'll use the output of `git log` as is.
+  sort: ''
+
+  groups:
+    - title: "New Features"
+      regexp: '^.*?Feature(\([[:word:]]+\))??:\s(?:.+)$'
+      order: 0
+    - title: "Improvements"
+      regexp: '^.*?Chore(\([[:word:]]+\))??:\s(?:.+)$'
+      order: 1
+    - title: "Bug fixes"
+      regexp: '^.*?Fix(\([[:word:]]+\))??:\s(?:.+)$'
+      order: 2
+    - title: "Continuous Integration"
+      regexp: '^.*?CI(\([[:word:]]+\))??:\s(?:.+)$'
+      order: 3
+    - title: "Documentation"
+      regexp: '^.*?Docs(\([[:word:]]+\))??:\s(?:.+)$'
+      order: 4
+    - title: Others
+      order: 999
