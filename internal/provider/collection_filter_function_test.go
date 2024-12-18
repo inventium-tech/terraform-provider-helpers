@@ -100,8 +100,8 @@ func TestCollectionFilterFunction(t *testing.T) {
 				  value = provider::helpers::collection_filter(local.test_object_collection, "key4", null)
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownOutputValue("test_match_null", knownvalue.ListSizeExact(2)),
-					statecheck.ExpectKnownOutputValue("test_match_null", knownvalue.ListExact([]knownvalue.Check{
+					statecheck.ExpectKnownOutputValue("test_match_object_null_value", knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownOutputValue("test_match_object_null_value", knownvalue.ListExact([]knownvalue.Check{
 						knownvalue.ObjectExact(map[string]knownvalue.Check{
 							"key1": knownvalue.StringExact("value1"),
 							"key2": knownvalue.Bool(true),
