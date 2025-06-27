@@ -1,0 +1,57 @@
+{
+  "branches": [
+    "main",
+    {"name": "dev", "channel": "pre-release", "prerelease": "rc"}
+  ],
+  "tagFormat": "v${version}",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          { "type": "release", "scope": "bump", "release": "major" },
+          { "type": "feat", "release": "minor" },
+          { "type": "fix", "release": "patch" },
+          { "type": "fix", "scope": "provider", "release": "minor" },
+          { "type": "docs", "release": "patch" },
+          { "type": "style", "release": "patch" },
+          { "type": "refactor", "release": "patch" },
+          { "type": "perf", "release": "patch" },
+          { "type": "test", "release": "patch" },
+          { "type": "ci", "release": "patch" },
+          { "type": "chore", "release": "patch" }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "parserOpts": {
+          "noteKeywords": ["BREAKING"]
+        },
+        "writerOpts": {
+          "commitsSort": ["subject"]
+        },
+        "presetConfig": {
+          "types": [
+            { "type": "release", "section": "\uD83D\uDE80 Major Release", "hidden": false },
+            { "type": "feat", "section": "✳\uFE0F Features", "hidden": false },
+            { "type": "fix", "section": "\uD83D\uDC1B Bug Fixes", "hidden": false },
+            { "type": "fix", "scope": "megalinter", "section": "", "hidden": true },
+            { "type": "docs", "section": "\uD83D\uDCD6 Documentation", "hidden": false },
+            { "type": "style", "section": "\uD83C\uDFA8 Styles", "hidden": true },
+            { "type": "refactor", "section": "\uD83D\uDD29 Refactor", "hidden": true },
+            { "type": "perf", "section": "⚡ Performance Enhancements", "hidden": false },
+            { "type": "test", "section": "✅ Tests", "hidden": true },
+            { "type": "test", "scope": "acc", "section": "\uD83E\uDDEA Acceptance Tests", "hidden": false },
+            { "type": "ci", "section": "\uD83D\uDD01 CI", "hidden": true },
+            { "type": "chore", "section": "\uD83E\uDDF9 Chores", "hidden": false }
+          ]
+        }
+      }
+    ],
+    "@semantic-release/github"
+  ]
+}

@@ -1,0 +1,25 @@
+name: Setup Go
+description: |
+  This action sets up the Go environment for your project, downloading the necessary modules
+  and preparing the environment for building or testing Go applications.
+inputs:
+  go-version-file:
+    description: Path to go.mod file
+    default: 'go.mod'
+  go-version:
+    description: Explicit Go version
+    required: false
+    default: '1.24'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Go environment
+      uses: actions/setup-go@v5.5.0
+      with:
+        go-version-file: ${{ inputs.go-version-file }}
+        go-version: ${{ inputs.go-version }}
+        cache: true
+    - name: Download Go modules
+      run: go mod download
+      shell: bash
