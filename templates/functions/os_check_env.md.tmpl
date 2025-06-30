@@ -1,0 +1,36 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: "OS Functions"
+description: |-
+  {{ .Summary | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Type | title }}: {{.Name}}
+
+{{ .Summary | trimspace }}
+
+The function `os_check_env` checks if an environment variable is set and optionally validates that it's not empty.
+It returns a boolean value indicating whether the environment variable exists and passes the validation.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{tffile .ExampleFile }}
+{{- end }}
+
+## Signature
+
+{{ .FunctionSignatureMarkdown }}
+
+## Arguments
+
+{{ .FunctionArgumentsMarkdown }}
+{{ if .HasVariadic -}}
+{{ .FunctionVariadicArgumentMarkdown }}
+{{- end }}
+
+## Return Type
+
+The return type of `{{.Name}}` is a boolean:
+- `true` if the environment variable exists and passes the validation
+- `false` if the environment variable doesn't exist or fails the validation (empty string when strict=true)
