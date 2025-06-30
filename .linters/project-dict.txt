@@ -1,6 +1,8 @@
 basetypes
+conventionalcommits
 coverprofile
 datasource
+ddea
 durationcheck
 dynamicvalidator
 errcheck
@@ -26,7 +28,9 @@ oxsecurity
 predeclared
 providerserver
 refucktor
+releaserc
 sonarcloud
+sonarqube
 sonarsource
 statecheck
 staticcheck
