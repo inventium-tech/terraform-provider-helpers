@@ -29,7 +29,7 @@
       {
         "preset": "conventionalcommits",
         "parserOpts": {
-          "noteKeywords": ["BREAKING"]
+          "noteKeywords": ["BREAKING", "BREAKING_CHANGES"]
         },
         "writerOpts": {
           "commitsSort": ["subject"]
