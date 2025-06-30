@@ -51,65 +51,10 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 release:
-  # If set to true, will not auto-publish the release.
-  # Note: all GitHub releases start as drafts while artifacts are uploaded.
-  # Available only for GitHub and Gitea.
-  draft: true
-
-  # This allows to change which tag GitHub will create.
-  tag: "{{ .CurrentTag }}"
-
-  # What to do with the release notes in case there the release already exists.
-  #
-  # Valid options are:
-  # - `keep-existing`: keep the existing notes
-  # - `append`: append the current release notes to the existing notes
-  # - `prepend`: prepend the current release notes to the existing notes
-  # - `replace`: replace existing notes
-  #
-  # Default: `keep-existing`.
-  mode: append
-
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
-  # If you want to manually examine the release before its live, uncomment this line:
+  # If you want to manually examine the release before it's live, uncomment this line:
   # draft: true
 changelog:
-  disable: false
-
-  # Changelog generation implementation to use.
-  #
-  # Valid options are:
-  # - `git`: uses `git log`;
-  # - `github`: uses the compare GitHub API, appending the author username to the changelog.
-  # - `gitlab`: uses the compare GitLab API, appending the author name and email to the changelog (requires a personal access token).
-  # - `gitea`: uses the compare Gitea API, appending the author username to the changelog.
-  # - `github-native`: uses the GitHub release notes generation API, disables the groups feature.
-  #
-  # Default: 'git'.
-  use: github
-
-  # Sorts the changelog by the commit's messages.
-  # Could either be asc, desc or empty
-  # Empty means 'no sorting', it'll use the output of `git log` as is.
-  sort: ''
-
-  groups:
-    - title: "New Features"
-      regexp: '^.*?Feature(\([[:word:]]+\))??:\s(?:.+)$'
-      order: 0
-    - title: "Improvements"
-      regexp: '^.*?Chore(\([[:word:]]+\))??:\s(?:.+)$'
-      order: 1
-    - title: "Bug fixes"
-      regexp: '^.*?Fix(\([[:word:]]+\))??:\s(?:.+)$'
-      order: 2
-    - title: "Continuous Integration"
-      regexp: '^.*?CI(\([[:word:]]+\))??:\s(?:.+)$'
-      order: 3
-    - title: "Documentation"
-      regexp: '^.*?Docs(\([[:word:]]+\))??:\s(?:.+)$'
-      order: 4
-    - title: Others
-      order: 999
+  disable: true
