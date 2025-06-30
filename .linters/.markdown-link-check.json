@@ -1,6 +1,7 @@
 {
     "ignorePatterns": [
-        { "pattern": "^#.+" }
+        { "pattern": "^#.+" },
+        { "pattern": "^https://www.buymeacoffee.com" }
     ],
     "retryOn429": true,
     "retryCount": 3,
