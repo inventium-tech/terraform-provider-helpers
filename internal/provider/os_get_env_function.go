@@ -60,5 +60,4 @@ func (o OsGetEnvFunction) Run(ctx context.Context, req function.RunRequest, resp
 	}
 
 	resp.Error = resp.Result.Set(ctx, result)
-	return
 }
