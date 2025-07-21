@@ -42,6 +42,7 @@ tfplugindocs
 tfprotov
 tftypes
 tfversion
+toset
 trimpath
 unconvert
 unparam
