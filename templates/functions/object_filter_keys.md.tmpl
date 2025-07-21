@@ -1,0 +1,42 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: "Object Functions"
+description: |-
+  {{ .Summary | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Type | title }}: {{.Name}}
+
+{{ .Summary | trimspace }}
+
+The function `object_filter_keys` creates a new object containing only the specified keys from the input object. 
+This is useful when you need to extract a subset of keys from an object while preserving their original values and types.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{tffile .ExampleFile }}
+{{- end }}
+
+## Signature
+
+{{ .FunctionSignatureMarkdown }}
+
+## Arguments
+
+{{ .FunctionArgumentsMarkdown }}
+{{ if .HasVariadic -}}
+{{ .FunctionVariadicArgumentMarkdown }}
+{{- end }}
+
+## Return Type
+
+The return type of `{{.Name}}` is an Object containing only the keys from the input `object` that match the keys specified in the `keys` set. The returned object maintains the same data types as the original object for the filtered keys.
+
+## Behavior
+
+- If a key in the `keys` set does not exist in the input object, it is ignored
+- If the `keys` set is empty, an empty object is returned
+- The function works with both Terraform objects and maps
+- The original object is not modified; a new filtered object is returned
+- Key matching is case-sensitive and exact

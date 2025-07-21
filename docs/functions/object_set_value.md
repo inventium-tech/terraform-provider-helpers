@@ -9,7 +9,7 @@ description: |-
 
 Sets a value in an Object or creates a new key with the value
 
-The function `object_set_value` have different modes of operation, depending on the value of the `operation` argument. 
+The function `object_set_value` has different modes of operation, depending on the value of the `operation` argument. 
 Check the [Operation Modes](#operation-modes) section for more information.
 
 ## Example Usage
@@ -82,15 +82,18 @@ object_set_value(object dynamic, key string, value dynamic, operation string) dy
 1. `operation` (String) The operation mode to use when setting the value
 
 
-### Operation Mode
+### Operation Modes
 
 The `operation` argument can have the following values:
 
-- `write_all`: This mode will write the value to the key, if the key does not exist it will be created.
-- `write_value`: This mode will write the value to the key ONLY if the key exists, otherwise expect no changes.
-- `write_safe`: This mode will write the value to the key ONLY if the key exists and the value is `null` or empty 
-  string.
+- `write_all`: Writes the value to the specified key. If the key does not exist, it will be created.
+- `write_value`: Writes the value to the specified key only if the key already exists. No changes are made if the 
+  key is missing.
+- `write_safe`: Writes the value to the specified key only if the key exists and its current value is `null` or an 
+  empty string.
 
 ## Return Type
 
-The return type of `object_set_value` is an Object from the input argument `object` with the desired changes.
+The return type of `object_set_value` is an object that contains all the keys and values from the input `object`, with the 
+specified key modified according to the chosen operation mode. The original object is not modified; a new object 
+with the changes is returned.
