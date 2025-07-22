@@ -126,10 +126,12 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: integration-tests-report.log
+      - name: Set safe TF_VERSION
+        run: echo "TF_VERSION_SAFE=$(echo '${{ matrix.tf-version }}' | sed 's/\*/x/g')" >> $GITHUB_ENV
       - name: Upload Test Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: integration-tests-report-tf${{ replace(matrix.tf-version, '*', 'x')}}-${{ github.sha }}
+          name: integration-tests-report-tf${{ env.TF_VERSION_SAFE }}-${{ github.sha }}
           path: |
             integration-tests-report.lcov
             integration-tests-report.log
