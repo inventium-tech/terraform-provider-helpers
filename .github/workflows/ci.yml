@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
       - name: Setup Go
         uses: ./.github/actions/setup-go
       - name: Go Build
@@ -34,23 +34,23 @@ jobs:
       pull-requests: write
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
       - name: Setup Go
         uses: ./.github/actions/setup-go
       - name: GolangCI Lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v8.0.0
         with:
           version: v2.1
           args: --config=.linters/.golangci.yml
       - name: MegaLinter
-        uses: oxsecurity/megalinter/flavors/go@v8
+        uses: oxsecurity/megalinter/flavors/go@v8.8.0
         id: ml
         env:
           VALIDATE_ALL_CODEBASE: true
           DEFAULT_WORKSPACE: ${{ github.workspace }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Archive reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         if: ${{ success() || failure() }}
         with:
           name: MegaLinter reports
@@ -64,13 +64,13 @@ jobs:
     needs: build
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
       - name: Setup Go
         uses: ./.github/actions/setup-go
       - name: Run Unit Tests
         run: go test ./... -v -coverprofile=unit-tests-report.lcov -json > unit-tests-report.log
       - name: Codecov Upload Coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v5.4.3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
@@ -78,12 +78,12 @@ jobs:
           flags: unit-tests
       - name: Codecov Upload Test Results
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
+        uses: codecov/test-results-action@v1.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: unit-tests-report.log
       - name: Upload Test Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: unit-tests-report-${{ github.sha }}
           path: |
@@ -101,11 +101,11 @@ jobs:
         tf-version: ['1.11.*', '1.12.*']
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
       - name: Setup Go
         uses: ./.github/actions/setup-go
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v3.1.2
         with:
           terraform_version: ${{ matrix.tf-version }}
           terraform_wrapper: false
@@ -114,7 +114,7 @@ jobs:
         env:
           TF_ACC: '1'
       - name: Codecov Upload Coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v5.4.3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
@@ -122,14 +122,14 @@ jobs:
           flags: integration-tests
       - name: Codecov Upload Test Results
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
+        uses: codecov/test-results-action@v1.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: integration-tests-report.log
       - name: Set safe TF_VERSION
         run: echo "TF_VERSION_SAFE=$(echo '${{ matrix.tf-version }}' | sed 's/\*/x/g')" >> $GITHUB_ENV
       - name: Upload Test Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: integration-tests-report-tf${{ env.TF_VERSION_SAFE }}-${{ github.sha }}
           path: |
@@ -145,22 +145,22 @@ jobs:
     needs: [unit-tests, integration-tests]
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
       - name: Download Unit Test Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.3.0
         with:
           name: unit-tests-report-${{ github.sha }}
           path: unit-tests/
       - name: Download Integration Test Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.3.0
         with:
           pattern: integration-tests-report-*-${{ github.sha }}
           path: integration-tests/
           merge-multiple: true
       - name: Sonarqube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v5.3.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -171,12 +171,12 @@ jobs:
     needs: build
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
       - name: CodeQL Analysis
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v3.29.3
         with:
           languages: go
       - name: CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v3.29.3
         with:
           category: '/language:go'
