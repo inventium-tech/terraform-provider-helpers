@@ -92,14 +92,14 @@ func (o ObjectContainsKeysFunction) Run(ctx context.Context, request function.Ru
 	case types.Object:
 		// Handle values from the type: Object
 		attrValues := v.Attributes()
-		objectKeys = make([]string, len(attrValues))
+		objectKeys = make([]string, 0, len(attrValues))
 		for key := range attrValues {
 			objectKeys = append(objectKeys, key)
 		}
 	case types.Map:
 		// Handle values from the type: Map
 		mapElements := v.Elements()
-		objectKeys = make([]string, len(mapElements))
+		objectKeys = make([]string, 0, len(mapElements))
 		for key := range mapElements {
 			objectKeys = append(objectKeys, key)
 		}

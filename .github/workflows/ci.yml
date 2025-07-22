@@ -129,7 +129,7 @@ jobs:
       - name: Upload Test Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: integration-tests-report-${{ matrix.tf-version }}-${{ github.sha }}
+          name: integration-tests-report-tf${{ replace(matrix.tf-version, '*', 'x')}}-${{ github.sha }}
           path: |
             integration-tests-report.lcov
             integration-tests-report.log

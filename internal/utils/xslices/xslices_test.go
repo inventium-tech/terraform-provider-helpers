@@ -404,7 +404,7 @@ func TestMapToStringToInt(t *testing.T) {
 	}
 }
 
-// Benchmark tests for performance validation
+// Benchmark tests for performance validation.
 func BenchmarkEvery(b *testing.B) {
 	slice := make([]int, 1000)
 	for i := range slice {
