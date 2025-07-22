@@ -1,5 +1,9 @@
 # Visit https://goreleaser.com for documentation on how to customize this behavior.
 version: 2
+
+archives:
+  - format: zip
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 before:
   hooks:
     # this is just an example and not a requirement for provider building/publishing
@@ -29,15 +33,33 @@ builds:
       - goos: darwin
         goarch: '386'
     binary: '{{ .ProjectName }}_v{{ .Version }}'
-archives:
-  - format: zip
-    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 checksum:
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
   name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
   algorithm: sha256
+git:
+  # Sort tags by semantic version to ensure proper ordering
+  tag_sort: -version:refname
+  # What should be used to specify prerelease suffix while sorting tags when gathering
+  # the current and previous tags if there are more than one tag in the same commit.
+  prerelease_suffix: "-rc."
+release:
+  extra_files:
+    - glob: 'terraform-registry-manifest.json'
+      name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
+  # Skip release if this is a pre-release tag (additional safety measure)
+  prerelease: auto
+  # What to do with the release notes in case there the release already exists.
+  #
+  # Valid options are:
+  # - `keep-existing`: keep the existing notes
+  # - `append`: append the current release notes to the existing notes
+  # - `prepend`: prepend the current release notes to the existing notes
+  # - `replace`: replace existing notes
+  mode: keep-existing
+  disable: true
 signs:
   - artifacts: checksum
     args:
@@ -50,11 +72,3 @@ signs:
       - "${signature}"
       - "--detach-sign"
       - "${artifact}"
-release:
-  extra_files:
-    - glob: 'terraform-registry-manifest.json'
-      name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
-  # If you want to manually examine the release before it's live, uncomment this line:
-  # draft: true
-changelog:
-  disable: true
