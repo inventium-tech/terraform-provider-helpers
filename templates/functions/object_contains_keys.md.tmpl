@@ -1,0 +1,55 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: "Object Functions"
+description: |-
+  {{ .Summary | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Type | title }}: {{.Name}}
+
+{{ .Summary | trimspace }}
+
+The function `object_contains_keys` checks whether an object or map contains specified keys. 
+It supports two modes: strict mode (default) where all specified keys must be present, and non-strict mode where at
+least one key must be present.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{tffile .ExampleFile }}
+{{- end }}
+
+## Signature
+
+{{ .FunctionSignatureMarkdown }}
+
+## Arguments
+
+{{ .FunctionArgumentsMarkdown }}
+{{ if .HasVariadic -}}
+{{ .FunctionVariadicArgumentMarkdown }}
+{{- end }}
+
+## Return Type
+
+The return type of `{{.Name}}` is a boolean:
+- `true` if the key presence condition is met based on the `strict` parameter
+- `false` if the key presence condition is not met
+
+## Behavior
+
+### Strict Mode (default: `strict = true`)
+- **All** specified keys must be present in the object for the function to return `true`
+- If any key is missing, the function returns `false`
+- This is the default behavior when the `strict` parameter is omitted
+
+### Non-Strict Mode (`strict = false`)
+- **At least one** of the specified keys must be present in the object for the function to return `true`
+- Only returns `false` if none of the specified keys are found
+
+### General Behavior
+- The function works with both Terraform objects and maps
+- Key matching is case-sensitive and exact
+- If the `keys` set is empty, the function returns `false`
+- If the input object is empty, the function returns `false` (regardless of strict mode)
+- The original object is not modified; this is a read-only operation
