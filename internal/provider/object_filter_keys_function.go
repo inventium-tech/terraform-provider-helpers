@@ -49,6 +49,7 @@ func (o ObjectFilterKeysFunction) Run(ctx context.Context, request function.RunR
 	var object types.Dynamic
 	var keys types.Set
 
+	// Get the parameters
 	err := request.Arguments.Get(ctx, &object, &keys)
 	if err != nil {
 		resp.Error = err

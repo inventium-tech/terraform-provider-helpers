@@ -35,7 +35,7 @@ func (v ElementsOfSameTypeValidator) ValidateParameterDynamic(ctx context.Contex
 		return element.TerraformType(ctx).Is(targetType)
 	}
 
-	if everyCheck := xslices.Every[attr.Type](elementTypes, funcEvery); !everyCheck {
+	if everyCheck := xslices.Every(elementTypes, funcEvery); !everyCheck {
 		resp.Error = validatorfuncerr.InvalidParameterValueMatchFuncError(
 			req.ArgumentPosition,
 			errorMsg,
