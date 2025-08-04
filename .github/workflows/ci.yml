@@ -173,10 +173,10 @@ jobs:
       - name: Git Checkout
         uses: actions/checkout@v4.2.2
       - name: CodeQL Analysis
-        uses: github/codeql-action/init@v3.29.3
+        uses: github/codeql-action/init@v3.29.5
         with:
           languages: go
       - name: CodeQL Analysis
-        uses: github/codeql-action/analyze@v3.29.3
+        uses: github/codeql-action/analyze@v3.29.5
         with:
           category: '/language:go'
