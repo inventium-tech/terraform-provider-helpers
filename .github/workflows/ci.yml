@@ -149,12 +149,12 @@ jobs:
         with:
           fetch-depth: 0
       - name: Download Unit Test Artifacts
-        uses: actions/download-artifact@v4.3.0
+        uses: actions/download-artifact@v5.0.0
         with:
           name: unit-tests-report-${{ github.sha }}
           path: unit-tests/
       - name: Download Integration Test Artifacts
-        uses: actions/download-artifact@v4.3.0
+        uses: actions/download-artifact@v5.0.0
         with:
           pattern: integration-tests-report-*-${{ github.sha }}
           path: integration-tests/
@@ -173,10 +173,10 @@ jobs:
       - name: Git Checkout
         uses: actions/checkout@v4.2.2
       - name: CodeQL Analysis
-        uses: github/codeql-action/init@v3.29.3
+        uses: github/codeql-action/init@v3.29.8
         with:
           languages: go
       - name: CodeQL Analysis
-        uses: github/codeql-action/analyze@v3.29.3
+        uses: github/codeql-action/analyze@v3.29.8
         with:
           category: '/language:go'
