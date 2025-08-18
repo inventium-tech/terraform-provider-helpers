@@ -1,0 +1,152 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: "Configuration Functions"
+description: |-
+  {{ .Summary | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Type | title }}: {{.Name}}
+
+{{ .Summary | trimspace }}
+
+The function `jsonschema_yaml_parse` reads a YAML file, validates it against a JSON Schema, and returns a structured object with schema defaults applied. This is particularly useful for configuration management where you want to ensure YAML files conform to a specific structure while providing sensible defaults for missing values.
+
+Key features:
+- **Schema Validation**: Ensures YAML content conforms to the specified JSON Schema
+- **Default Application**: Automatically applies default values defined in the schema
+- **Type Safety**: Validates data types according to the schema definition
+- **Error Handling**: Provides clear error messages for validation failures or file access issues
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{tffile .ExampleFile }}
+{{- end }}
+
+## Signature
+
+{{ .FunctionSignatureMarkdown }}
+
+## Arguments
+
+{{ .FunctionArgumentsMarkdown }}
+{{ if .HasVariadic -}}
+{{ .FunctionVariadicArgumentMarkdown }}
+{{- end }}
+
+## Return Type
+
+The return type of `{{.Name}}` is a dynamic object containing the parsed and validated YAML data with schema defaults applied. The structure of the returned object matches the schema definition.
+
+## Behavior
+
+### Schema Validation
+- The JSON Schema file is loaded and compiled for validation
+- The YAML file is parsed and validated against the schema
+- If validation fails, the function returns an error with details about what failed
+- Supports JSON Schema Draft 2020-12 format
+
+### Default Value Application
+- Default values defined in the schema are automatically applied to missing properties
+- Nested objects receive defaults recursively
+- Defaults are only applied to objects that have some content or are explicitly defined
+- Empty objects (`{}`) do not automatically receive defaults unless explicitly configured in the schema
+
+### File Handling
+- Both schema and YAML files must be accessible at the specified paths
+- File paths are resolved relative to the Terraform working directory
+- Clear error messages are provided for file access issues (file not found, permission denied, etc.)
+
+### Data Type Conversion
+- YAML data is converted to appropriate Terraform types
+- Numbers are converted to Int64 or Float64 as appropriate
+- Booleans, strings, arrays, and objects are preserved with proper typing
+- Complex nested structures are fully supported
+
+## Common Use Cases
+
+### Configuration Management
+Use `jsonschema_yaml_parse` to load and validate application configuration files:
+
+```hcl
+locals {
+  app_config = provider::helpers::jsonschema_yaml_parse(
+    "${path.module}/schemas/app-config.schema.json",
+    "${path.module}/configs/${var.environment}.yaml"
+  )
+}
+
+resource "kubernetes_config_map" "app_config" {
+  metadata {
+    name = "app-config"
+  }
+  
+  data = {
+    "config.json" = jsonencode(local.app_config)
+  }
+}
+```
+
+### Microservice Configuration
+Standardize microservice configurations across your infrastructure:
+
+```hcl
+locals {
+  service_config = provider::helpers::jsonschema_yaml_parse(
+    "${path.module}/schemas/service.schema.json",
+    "${path.module}/services/${var.service_name}/config.yaml"
+  )
+}
+
+resource "helm_release" "microservice" {
+  name  = var.service_name
+  chart = "./charts/microservice"
+  
+  values = [
+    jsonencode({
+      service = local.service_config.service
+      logging = local.service_config.logging
+      metrics = local.service_config.metrics
+    })
+  ]
+}
+```
+
+### Infrastructure as Code Templates
+Create reusable infrastructure templates with validated configurations:
+
+```hcl
+locals {
+  infrastructure_config = provider::helpers::jsonschema_yaml_parse(
+    "${path.module}/schemas/infrastructure.schema.json", 
+    var.config_file
+  )
+}
+
+module "vpc" {
+  source = "./modules/vpc"
+  
+  cidr_block           = local.infrastructure_config.network.vpc_cidr
+  availability_zones   = local.infrastructure_config.network.availability_zones
+  enable_dns_hostnames = local.infrastructure_config.network.dns_hostnames
+}
+```
+
+## Error Handling
+
+The function will return errors in the following scenarios:
+
+- **File Access Errors**: When the schema or YAML file cannot be read (file not found, permission denied, etc.)
+- **JSON Schema Compilation Errors**: When the JSON Schema file contains invalid schema definitions
+- **YAML Parsing Errors**: When the YAML file contains invalid YAML syntax
+- **Schema Validation Errors**: When the YAML content doesn't conform to the JSON Schema requirements
+
+Error messages are descriptive and include the specific reason for failure to help with debugging.
+
+## Best Practices
+
+1. **Schema Design**: Design your JSON schemas with sensible defaults to minimize configuration requirements
+2. **Error Handling**: Use Terraform's error handling capabilities to provide fallback configurations
+3. **File Organization**: Keep schema files in a dedicated directory and version them alongside your Terraform code
+4. **Validation**: Use required fields in your schema to enforce critical configuration values
+5. **Documentation**: Document your schemas and provide example YAML files for users
