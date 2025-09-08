@@ -70,7 +70,7 @@ jobs:
       - name: Run Unit Tests
         run: go test ./... -v -coverprofile=unit-tests-report.lcov -json > unit-tests-report.log
       - name: Codecov Upload Coverage
-        uses: codecov/codecov-action@v5.4.3
+        uses: codecov/codecov-action@v5.5.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
@@ -114,7 +114,7 @@ jobs:
         env:
           TF_ACC: '1'
       - name: Codecov Upload Coverage
-        uses: codecov/codecov-action@v5.4.3
+        uses: codecov/codecov-action@v5.5.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
@@ -160,7 +160,7 @@ jobs:
           path: integration-tests/
           merge-multiple: true
       - name: Sonarqube Scan
-        uses: SonarSource/sonarqube-scan-action@v5.3.0
+        uses: SonarSource/sonarqube-scan-action@v5.3.1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -173,10 +173,10 @@ jobs:
       - name: Git Checkout
         uses: actions/checkout@v5.0.0
       - name: CodeQL Analysis
-        uses: github/codeql-action/init@v3.29.9
+        uses: github/codeql-action/init@v3.30.1
         with:
           languages: go
       - name: CodeQL Analysis
-        uses: github/codeql-action/analyze@v3.29.9
+        uses: github/codeql-action/analyze@v3.30.1
         with:
           category: '/language:go'
