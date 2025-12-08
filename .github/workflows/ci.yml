@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
       - name: Setup Go
         uses: ./.github/actions/setup-go
       - name: Go Build
@@ -34,16 +34,16 @@ jobs:
       pull-requests: write
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
       - name: Setup Go
         uses: ./.github/actions/setup-go
       - name: GolangCI Lint
-        uses: golangci/golangci-lint-action@v9.1.0
+        uses: golangci/golangci-lint-action@v9.2.0
         with:
           version: v2.1
           args: --config=.linters/.golangci.yml
       - name: MegaLinter
-        uses: oxsecurity/megalinter/flavors/go@v9.1.0
+        uses: oxsecurity/megalinter/flavors/go@v9.2.0
         id: ml
         env:
           VALIDATE_ALL_CODEBASE: true
@@ -64,7 +64,7 @@ jobs:
     needs: build
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
       - name: Setup Go
         uses: ./.github/actions/setup-go
       - name: Run Unit Tests
@@ -101,7 +101,7 @@ jobs:
         tf-version: ['1.11.*', '1.12.*']
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
       - name: Setup Go
         uses: ./.github/actions/setup-go
       - name: Setup Terraform
@@ -145,7 +145,7 @@ jobs:
     needs: [unit-tests, integration-tests]
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0
       - name: Download Unit Test Artifacts
@@ -171,12 +171,12 @@ jobs:
     needs: build
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
       - name: CodeQL Analysis
-        uses: github/codeql-action/init@v4.31.5
+        uses: github/codeql-action/init@v4.31.7
         with:
           languages: go
       - name: CodeQL Analysis
-        uses: github/codeql-action/analyze@v4.31.5
+        uses: github/codeql-action/analyze@v4.31.7
         with:
           category: '/language:go'
