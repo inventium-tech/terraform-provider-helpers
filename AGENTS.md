@@ -61,7 +61,7 @@ docker run --rm -v $PWD:/tmp/lint:rw ghcr.io/oxsecurity/megalinter-go:latest
 For CI parity, use the pinned image tag:
 
 ```sh
-docker run --rm -v $PWD:/tmp/lint:rw ghcr.io/oxsecurity/megalinter-go:v8.8.0
+docker run --rm -v $PWD:/tmp/lint:rw ghcr.io/oxsecurity/megalinter-go:v9.4.0
 ```
 
 This repository uses `.mega-linter.yml` (with `LINTER_RULES_PATH: .linters`) and writes reports to `.ml-reports/`.
@@ -86,5 +86,5 @@ Expected exit code: `0`.
 ## CI/CD Automation Reference
 
 - CI workflow: `.github/workflows/ci.yml` (`go build`, linters, unit tests, integration tests, security scans)
-- MegaLinter in CI: `oxsecurity/megalinter/flavors/go@v8.8.0` (reports archived from `.ml-reports/`)
+- MegaLinter in CI: `oxsecurity/megalinter/flavors/go@v9.4.0` (reports archived from `.ml-reports/`)
 - Release workflow: `.github/workflows/release.yml` (semantic-release + goreleaser)
