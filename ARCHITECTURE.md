@@ -6,9 +6,11 @@ See [README.md](./README.md) for end-user quickstart and [AGENTS.md](./AGENTS.md
 
 ## 1. System Overview
 
-This repository implements a Terraform provider that exposes **custom functions** (Terraform 1.8+) to extend the Terraform language. It does not manage infrastructure resources or data sources.
+This repository implements a Terraform provider that exposes **custom functions** (Terraform 1.8+) to extend the
+Terraform language. It does not manage infrastructure resources or data sources.
 
-The provider is focused on reusable helper behavior in three areas: collection transforms, object manipulation, and environment-aware OS helpers.
+The provider is focused on reusable helper behavior in three areas: collection transforms, object manipulation, and
+environment-aware OS helpers.
 
 ## 2. Architectural Style
 
@@ -20,17 +22,17 @@ Layered package-oriented Go project:
 
 ## 3. Component Breakdown
 
-| Component | Responsibility |
-|---|---|
-| `main.go` | Provider server entrypoint for Terraform plugin runtime |
-| `internal/provider` | Function definitions, schema, and tests |
-| `internal/validators` | Input and schema validation helpers |
-| `internal/custom_types` | Shared custom type abstractions |
-| `internal/utils` | Reusable low-level utility functions |
-| `templates/functions` | Human-authored docs templates |
-| `examples/functions` | Runnable Terraform examples used by docs/tests |
-| `docs/functions` | Generated end-user function reference |
-| `tools/tools.go` | `go generate` bridge for doc generation |
+| Component               | Responsibility                                          |
+|-------------------------|---------------------------------------------------------|
+| `main.go`               | Provider server entrypoint for Terraform plugin runtime |
+| `internal/provider`     | Function definitions, schema, and tests                 |
+| `internal/validators`   | Input and schema validation helpers                     |
+| `internal/custom_types` | Shared custom type abstractions                         |
+| `internal/utils`        | Reusable low-level utility functions                    |
+| `templates/functions`   | Human-authored docs templates                           |
+| `examples/functions`    | Runnable Terraform examples used by docs/tests          |
+| `docs/functions`        | Generated end-user function reference                   |
+| `tools/tools.go`        | `go generate` bridge for doc generation                 |
 
 ## 4. Data & Control Flow
 
@@ -47,13 +49,13 @@ Documentation flow:
 
 ## 5. External Dependencies
 
-| Dependency | Type | Purpose |
-|---|---|---|
-| Terraform CLI | Tooling/runtime | Runs plans/applies and acceptance/integration tests |
-| Terraform Plugin Framework | Go library | Provider function implementation model |
-| terraform-plugin-docs (`tfplugindocs`) | Tooling | Generates function docs from templates/examples |
-| GitHub Actions | CI/CD platform | Build/test/lint/release workflows |
-| semantic-release + goreleaser | Release tooling | Versioning, release notes, and artifact publishing |
+| Dependency                             | Type            | Purpose                                             |
+|----------------------------------------|-----------------|-----------------------------------------------------|
+| Terraform CLI                          | Tooling/runtime | Runs plans/applies and acceptance/integration tests |
+| Terraform Plugin Framework             | Go library      | Provider function implementation model              |
+| terraform-plugin-docs (`tfplugindocs`) | Tooling         | Generates function docs from templates/examples     |
+| GitHub Actions                         | CI/CD platform  | Build/test/lint/release workflows                   |
+| semantic-release + goreleaser          | Release tooling | Versioning, release notes, and artifact publishing  |
 
 ## 6. Repository Structure
 
@@ -68,8 +70,10 @@ Top-level structure is optimized for a provider codebase with generated docs and
 
 - **Function-only scope:** keep provider focused on language helpers instead of resource management.
 - **Generated documentation:** `docs/` is an output artifact; source-of-truth lives in `templates/` and `examples/`.
-- **Test-first change safety:** provider behavior changes should be validated with `go test` and, when relevant, `TF_ACC=1` provider tests.
-- **Release automation compatibility:** commit semantics are designed to work with semantic-release rules in `.releaserc.json`.
+- **Test-first change safety:** provider behavior changes should be validated with `go test` and, when relevant,
+  `TF_ACC=1` provider tests.
+- **Release automation compatibility:** commit semantics are designed to work with semantic-release rules in
+  `.releaserc.json`.
 
 ## 8. Evolution Strategy
 

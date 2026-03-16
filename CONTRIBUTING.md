@@ -2,7 +2,8 @@
 
 Developer and automation change process for this repository.
 
-See [AGENTS.md](./AGENTS.md) for canonical execution commands and automation constraints. See [ARCHITECTURE.md](./ARCHITECTURE.md) for design context.
+See [AGENTS.md](./AGENTS.md) for canonical execution commands and automation constraints.
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for design context.
 
 ## Local Setup
 
@@ -21,14 +22,14 @@ go mod download
 
 Create focused branches using one of these prefixes:
 
-| Prefix | Purpose |
-|---|---|
-| `feature/<title>` | Introduce a new feature |
-| `fix/<title>` | Fix an existing bug |
-| `docs/<title>` | Documentation-only changes |
-| `perf/<title>` | Performance improvements |
-| `ci/<title>` | CI/CD workflow changes |
-| `chore/<title>` | Refactoring or maintenance tasks |
+| Prefix            | Purpose                          |
+|-------------------|----------------------------------|
+| `feature/<title>` | Introduce a new feature          |
+| `fix/<title>`     | Fix an existing bug              |
+| `docs/<title>`    | Documentation-only changes       |
+| `perf/<title>`    | Performance improvements         |
+| `ci/<title>`      | CI/CD workflow changes           |
+| `chore/<title>`   | Refactoring or maintenance tasks |
 
 Keep each branch scoped to a single logical change.
 
@@ -52,11 +53,13 @@ Commit messages should explain **why** the change exists, not only what changed.
 1. Sync with the latest target branch (`main` or `dev`) before starting work.
 2. Create a branch that follows [Branching Conventions](#branching-conventions).
 3. Implement the change and keep commits focused.
-4. Run relevant checks from [AGENTS.md](./AGENTS.md) (build/tests/docs generation/linting as applicable). For local linting, run MegaLinter (Docker), for example:
+4. Run relevant checks from [AGENTS.md](./AGENTS.md) (build/tests/docs generation/linting as applicable). For local
+   linting, run MegaLinter (Docker), for example:
 
    ```sh
    docker run --rm -v $PWD:/tmp/lint:rw ghcr.io/oxsecurity/megalinter-go:latest
    ```
+
 5. Open a PR with a title that follows [Commit Message Format](#commit-message-format).
 6. Include change context and any testing evidence in the PR description.
 7. Request review from maintainers (see [CODEOWNERS](./.github/CODEOWNERS)).

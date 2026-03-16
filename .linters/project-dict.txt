@@ -9,6 +9,7 @@ dynamicvalidator
 errcheck
 exportloopref
 forcetypeassert
+ghaction
 gitea
 goarch
 gofmt

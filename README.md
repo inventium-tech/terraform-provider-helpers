@@ -58,18 +58,22 @@ Expected result: output `updated_value = {"key1" = "new_value"}`.
 
 ## Available Functions
 
-- Collection: [collection_filter](./docs/functions/collection_filter.md)
-- Object: [object_set_value](./docs/functions/object_set_value.md), [object_filter_keys](./docs/functions/object_filter_keys.md), [object_contains_keys](./docs/functions/object_contains_keys.md)
+- Collection:
+  - [collection_filter](./docs/functions/collection_filter.md)
+- Object:
+  - [object_set_value](./docs/functions/object_set_value.md)
+  - [object_filter_keys](./docs/functions/object_filter_keys.md)
+  - [object_contains_keys](./docs/functions/object_contains_keys.md)
 - OS: [os_get_env](./docs/functions/os_get_env.md), [os_check_env](./docs/functions/os_check_env.md)
 
 ## Documentation
 
-| Document | Purpose |
-|----------|---------|
-| [docs/index.md](./docs/index.md) | End-user provider and function reference |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | Change process for contributors |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | System structure and design decisions |
-| [AGENTS.md](./AGENTS.md) | AI/automation execution rules |
-| [LICENSE](./LICENSE) | License terms |
+| Document                             | Purpose                                  |
+|--------------------------------------|------------------------------------------|
+| [docs/index.md](./docs/index.md)     | End-user provider and function reference |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Change process for contributors          |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System structure and design decisions    |
+| [AGENTS.md](./AGENTS.md)             | AI/automation execution rules            |
+| [LICENSE](./LICENSE)                 | License terms                            |
 
 Supported platform note: CI validates on Linux with Go and Terraform 1.11.x/1.12.x.
