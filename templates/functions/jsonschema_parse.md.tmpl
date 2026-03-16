@@ -9,10 +9,11 @@ description: |-
 
 {{ .Summary | trimspace }}
 
-The function `jsonschema_yaml_parse` reads a YAML file, validates it against a JSON Schema, and returns a structured object with schema defaults applied. This is particularly useful for configuration management where you want to ensure YAML files conform to a specific structure while providing sensible defaults for missing values.
+The function `jsonschema_parse` resolves both schema and target from **URL**, **file path** (including relative paths), or **inline JSON/YAML content**. It validates the target against the schema and returns a structured object with schema defaults applied recursively.
 
 Key features:
-- **Schema Validation**: Ensures YAML content conforms to the specified JSON Schema
+- **Flexible Inputs**: Schema and target can each be URL, path, or inline content
+- **Schema Validation**: Ensures input content conforms to the specified JSON Schema
 - **Default Application**: Automatically applies default values defined in the schema
 - **Type Safety**: Validates data types according to the schema definition
 - **Error Handling**: Provides clear error messages for validation failures or file access issues
@@ -36,26 +37,27 @@ Key features:
 
 ## Return Type
 
-The return type of `{{.Name}}` is a dynamic object containing the parsed and validated YAML data with schema defaults applied. The structure of the returned object matches the schema definition.
+The return type of `{{.Name}}` is a dynamic object containing parsed and validated data with schema defaults applied. The structure of the returned object matches the schema definition.
 
 ## Behavior
 
 ### Schema Validation
-- The JSON Schema file is loaded and compiled for validation
-- The YAML file is parsed and validated against the schema
+- The schema source is resolved from URL/path/inline and compiled for validation
+- The target source is resolved from URL/path/inline and parsed as JSON or YAML
 - If validation fails, the function returns an error with details about what failed
 - Supports JSON Schema Draft 2020-12 format
 
 ### Default Value Application
 - Default values defined in the schema are automatically applied to missing properties
 - Nested objects receive defaults recursively
-- Defaults are only applied to objects that have some content or are explicitly defined
-- Empty objects (`{}`) do not automatically receive defaults unless explicitly configured in the schema
+- Defaults are materialized recursively for nested object schemas (including `default: {}` patterns)
+- Empty objects (`{}`) can still materialize nested defaults where schema defaults define them
 
-### File Handling
-- Both schema and YAML files must be accessible at the specified paths
-- File paths are resolved relative to the Terraform working directory
-- Clear error messages are provided for file access issues (file not found, permission denied, etc.)
+### Source Resolution and Format Detection
+- Resolution order is URL (`http://` or `https://`), then file path lookup, then inline content
+- JSON parsing is attempted first, then YAML parsing
+- Relative file paths are resolved from Terraform execution context
+- Clear errors are returned for unreachable URLs, file access failures, parse failures, or schema compilation errors
 
 ### Data Type Conversion
 - YAML data is converted to appropriate Terraform types
@@ -66,11 +68,11 @@ The return type of `{{.Name}}` is a dynamic object containing the parsed and val
 ## Common Use Cases
 
 ### Configuration Management
-Use `jsonschema_yaml_parse` to load and validate application configuration files:
+Use `jsonschema_parse` to load and validate application configuration files:
 
 ```hcl
 locals {
-  app_config = provider::helpers::jsonschema_yaml_parse(
+  app_config = provider::helpers::jsonschema_parse(
     "${path.module}/schemas/app-config.schema.json",
     "${path.module}/configs/${var.environment}.yaml"
   )
@@ -92,7 +94,7 @@ Standardize microservice configurations across your infrastructure:
 
 ```hcl
 locals {
-  service_config = provider::helpers::jsonschema_yaml_parse(
+  service_config = provider::helpers::jsonschema_parse(
     "${path.module}/schemas/service.schema.json",
     "${path.module}/services/${var.service_name}/config.yaml"
   )
@@ -117,7 +119,7 @@ Create reusable infrastructure templates with validated configurations:
 
 ```hcl
 locals {
-  infrastructure_config = provider::helpers::jsonschema_yaml_parse(
+  infrastructure_config = provider::helpers::jsonschema_parse(
     "${path.module}/schemas/infrastructure.schema.json", 
     var.config_file
   )
@@ -136,10 +138,10 @@ module "vpc" {
 
 The function will return errors in the following scenarios:
 
-- **File Access Errors**: When the schema or YAML file cannot be read (file not found, permission denied, etc.)
-- **JSON Schema Compilation Errors**: When the JSON Schema file contains invalid schema definitions
-- **YAML Parsing Errors**: When the YAML file contains invalid YAML syntax
-- **Schema Validation Errors**: When the YAML content doesn't conform to the JSON Schema requirements
+- **Source Access Errors**: When schema/target URL or file cannot be read
+- **JSON Schema Compilation Errors**: When the schema source contains invalid schema definitions
+- **Parse Errors**: When schema or target content is not valid JSON/YAML
+- **Schema Validation Errors**: When target content doesn't conform to the JSON Schema requirements
 
 Error messages are descriptive and include the specific reason for failure to help with debugging.
 
