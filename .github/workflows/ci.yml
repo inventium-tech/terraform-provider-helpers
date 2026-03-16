@@ -98,7 +98,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        tf-version: ['1.11.*', '1.12.*']
+        tf-version: ['1.11.*', '1.12.*', '1.13.*', '1.14.*']
     steps:
       - name: Git Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
