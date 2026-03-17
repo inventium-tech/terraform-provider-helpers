@@ -20,6 +20,9 @@ gosimple
 govet
 ineffassign
 inventium
+jsonencode
+jsonschema
+kaptinlin
 knownvalue
 ldflags
 makezero
