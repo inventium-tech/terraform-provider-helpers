@@ -1,0 +1,39 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: "Configuration Functions"
+description: |-
+  {{ .Summary | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Type | title }}: {{.Name}}
+
+{{ .Summary | trimspace }}
+
+The function `jsonschema_validate` resolves both schema and target from **URL**, **file path** (including relative paths), or **inline JSON/YAML content**, then validates the target against the schema.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{tffile .ExampleFile }}
+{{- end }}
+
+## Signature
+
+{{ .FunctionSignatureMarkdown }}
+
+## Arguments
+
+{{ .FunctionArgumentsMarkdown }}
+
+## Return Type
+
+The return type of `{{.Name}}` is a boolean:
+- `true` when schema validation succeeds
+- `false` when schema validation fails
+
+## Behavior
+
+- Input resolution order: URL (`http://` or `https://`), then file path, then inline content.
+- JSON parsing is attempted first, then YAML parsing.
+- Returns `false` only for schema validation mismatches.
+- Returns an error for operational failures (source access errors, malformed schema, malformed JSON/YAML, or internal processing errors).

@@ -9,6 +9,7 @@ dynamicvalidator
 errcheck
 exportloopref
 forcetypeassert
+ghaction
 gitea
 goarch
 gofmt
@@ -19,6 +20,9 @@ gosimple
 govet
 ineffassign
 inventium
+jsonencode
+jsonschema
+kaptinlin
 knownvalue
 ldflags
 makezero

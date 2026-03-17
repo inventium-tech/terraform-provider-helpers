@@ -5,6 +5,7 @@
 # all, none, or list of linter keys
 APPLY_FIXES: # all, none, or list of linter keys
   - JSON_PRETTIER
+  - MARKDOWN_MARKDOWNLINT
   - YAML_YAMLLINT
 ENABLE_LINTERS: # If you use ENABLE_LINTERS variable, all other linters will be disabled by default
   - COPYPASTE_JSCPD               # https://megalinter.io/latest/descriptors/copypaste_jscpd/
