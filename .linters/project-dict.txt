@@ -34,11 +34,13 @@ predeclared
 providerserver
 refucktor
 releaserc
+samber
 sonarcloud
 sonarqube
 sonarsource
 statecheck
 staticcheck
+stretchr
 stringvalidator
 tenv
 terraformterraform

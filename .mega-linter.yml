@@ -39,6 +39,7 @@ ADDITIONAL_EXCLUDED_DIRECTORIES:
   - '.linters'
   - '.vscode'
   - '.idea'
+  - '.agents'
 
 # MARKDOWN_MARKDOWNLINT variables
 MARKDOWN_MARKDOWNLINT_CONFIG_FILE: .markdownlint.yml
