@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 var _ function.Function = &JsonschemaParseFunction{}
@@ -31,13 +32,20 @@ func (j JsonschemaParseFunction) Definition(_ context.Context, _ function.Defini
 }
 
 func (j JsonschemaParseFunction) Run(ctx context.Context, request function.RunRequest, resp *function.RunResponse) {
+	ctx = tflog.SetField(ctx, "function_name", jsonschemaParseFunctionName)
+
 	schemaSource, targetSource, err := readJSONSchemaSources(ctx, request)
 	if err != nil {
+		tflog.Error(ctx, "Failed to read function arguments", map[string]interface{}{
+			"stage":      "read_arguments",
+			"error_kind": "argument_decode_failed",
+			"error":      err.Error(),
+		})
 		resp.Error = function.NewFuncError(err.Error())
 		return
 	}
 
-	defaultedContent, processErr := processJSONSchemaParse(schemaSource, targetSource)
+	defaultedContent, processErr := processJSONSchemaParse(ctx, schemaSource, targetSource)
 	if processErr != nil {
 		resp.Error = function.NewFuncError(processErr.Error())
 		return
@@ -45,6 +53,11 @@ func (j JsonschemaParseFunction) Run(ctx context.Context, request function.RunRe
 
 	terraformValue, convertErr := convertToTerraformDynamicValue(ctx, defaultedContent)
 	if convertErr != nil {
+		tflog.Error(ctx, "Failed to convert value to Terraform dynamic value", map[string]interface{}{
+			"stage":      "convert_result",
+			"error_kind": "terraform_conversion_failed",
+			"error":      convertErr.Error(),
+		})
 		resp.Error = function.NewFuncError(fmt.Sprintf("Error converting to Terraform value: %s", convertErr.Error()))
 		return
 	}
@@ -52,6 +65,11 @@ func (j JsonschemaParseFunction) Run(ctx context.Context, request function.RunRe
 	// Set the result in the response
 	setErr := resp.Result.Set(ctx, terraformValue)
 	if setErr != nil {
+		tflog.Error(ctx, "Failed to set function result", map[string]interface{}{
+			"stage":      "set_result",
+			"error_kind": "result_set_failed",
+			"error":      setErr.Error(),
+		})
 		resp.Error = function.NewFuncError(fmt.Sprintf("Error setting result: %s", setErr.Error()))
 		return
 	}

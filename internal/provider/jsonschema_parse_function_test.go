@@ -1,18 +1,21 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
+	"github.com/kaptinlin/jsonschema"
 )
 
 func TestJsonschemaParseFunctionInlineSchemaInlineTarget(t *testing.T) {
@@ -257,9 +260,61 @@ output "parsed" {
   value = provider::helpers::jsonschema_parse(local.schema, local.target)
 }
 `,
-				ExpectError: regexp.MustCompile(`schema\s+validation failed`),
+				ExpectError: regexp.MustCompile(`schema\s+validation failed:\s+.+:\s+.+`),
 			},
 		},
+	})
+}
+
+func TestFormatJSONSchemaValidationDetailsDeterministicSorted(t *testing.T) {
+	t.Parallel()
+
+	validationResult := &jsonschema.EvaluationResult{
+		Valid: false,
+		Errors: map[string]*jsonschema.EvaluationError{
+			"required": jsonschema.NewEvaluationError(
+				"required",
+				"required_missing",
+				"Required property {property} is missing",
+				map[string]any{"property": "version"},
+			),
+		},
+		Details: []*jsonschema.EvaluationResult{
+			{
+				Valid:            false,
+				InstanceLocation: "/service",
+				Errors: map[string]*jsonschema.EvaluationError{
+					"type": jsonschema.NewEvaluationError("type", "invalid_type", "Value should be of type string"),
+				},
+			},
+		},
+	}
+
+	got := formatJSONSchemaValidationDetails(validationResult)
+	want := "/service/type: Value should be of type string; required: Required property version is missing"
+
+	if got != want {
+		t.Fatalf("unexpected formatted validation details\nwant: %q\n got: %q", want, got)
+	}
+}
+
+func TestFormatJSONSchemaValidationDetailsFallback(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil result", func(t *testing.T) {
+		got := formatJSONSchemaValidationDetails(nil)
+		if got != "evaluation failed" {
+			t.Fatalf("unexpected fallback details for nil result: %q", got)
+		}
+	})
+
+	t.Run("no detailed errors", func(t *testing.T) {
+		validationResult := &jsonschema.EvaluationResult{Valid: false}
+
+		got := formatJSONSchemaValidationDetails(validationResult)
+		if got != "evaluation failed" {
+			t.Fatalf("unexpected fallback details without detailed errors: %q", got)
+		}
 	})
 }
 
@@ -269,5 +324,26 @@ func writeTestFile(t *testing.T, path string, content string) {
 	err := os.WriteFile(path, []byte(content), 0o644)
 	if err != nil {
 		t.Fatalf("failed to write file %s: %v", path, err)
+	}
+}
+
+func TestReadURLSourceHonorsContextCancellation(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
+		_, _ = responseWriter.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := readURLSource(ctx, server.URL, jsonSchemaSourceRoleSchema)
+	if err == nil {
+		t.Fatal("expected error from canceled context")
+	}
+
+	if !strings.Contains(err.Error(), "context canceled") {
+		t.Fatalf("expected context canceled error, got: %v", err)
 	}
 }
