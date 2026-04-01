@@ -9,8 +9,6 @@ APPLY_FIXES: # all, none, or list of linter keys
   - YAML_YAMLLINT
 ENABLE_LINTERS: # If you use ENABLE_LINTERS variable, all other linters will be disabled by default
   - COPYPASTE_JSCPD               # https://megalinter.io/latest/descriptors/copypaste_jscpd/
-  #  - GO_GOLANGCI_LINT              # https://megalinter.io/latest/descriptors/go_golangci_lint/ # missing support for Go 1.23
-  - GO_REVIVE                     # https://megalinter.io/latest/descriptors/go_revive/
   - JSON_PRETTIER                 # https://megalinter.io/latest/descriptors/json_prettier/
   - MARKDOWN_MARKDOWN_LINK_CHECK  # https://megalinter.io/latest/descriptors/markdown_markdown_link_check/
   - MARKDOWN_MARKDOWNLINT         # https://megalinter.io/latest/descriptors/markdown_markdownlint/
