@@ -443,6 +443,61 @@ func TestIsObjectSchema(t *testing.T) {
 	}
 }
 
+func TestProcessJSONSchemaValidateOperationalError(t *testing.T) {
+	t.Parallel()
+
+	// An empty schema source is an operational error (not a jsonSchemaValidationError),
+	// so processJSONSchemaValidate must return false AND a non-nil error.
+	ok, err := processJSONSchemaValidate(context.Background(), "", `{"key": "value"}`)
+	if err == nil {
+		t.Fatal("expected error for empty schema source")
+	}
+
+	if ok {
+		t.Fatal("expected false when an operational error occurs")
+	}
+
+	if !strings.Contains(err.Error(), "schema source cannot be empty") {
+		t.Fatalf("unexpected error message: %v", err)
+	}
+}
+
+func TestProcessJSONSchemaValidateValidationFailureReturnsFalseNoError(t *testing.T) {
+	t.Parallel()
+
+	schema := `{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}`
+	// target is missing the required "name" property — validation failure, not an operational error
+	target := `{"age": 30}`
+
+	ok, err := processJSONSchemaValidate(context.Background(), schema, target)
+	if err != nil {
+		t.Fatalf("expected no error for validation failure, got: %v", err)
+	}
+
+	if ok {
+		t.Fatal("expected false for schema validation failure")
+	}
+}
+
+func TestCompileJSONSchemaDocumentMarshalError(t *testing.T) {
+	t.Parallel()
+
+	// A channel value cannot be marshaled to JSON, which exercises the marshal error branch.
+	schemaObject := map[string]interface{}{
+		"type":    "object",
+		"channel": make(chan int),
+	}
+
+	_, err := compileJSONSchemaDocument(context.Background(), schemaObject)
+	if err == nil {
+		t.Fatal("expected error for unmarshalable schema object")
+	}
+
+	if !strings.Contains(err.Error(), "error marshaling schema document") {
+		t.Fatalf("expected marshal error, got: %v", err)
+	}
+}
+
 func TestDeepCopyValue(t *testing.T) {
 	t.Parallel()
 

@@ -238,3 +238,36 @@ func TestCollectionFilterFunction(t *testing.T) {
 		},
 	})
 }
+
+func TestCollectionFilterFunctionMissingKeyInObjects(t *testing.T) {
+	t.Parallel()
+
+	// When a key does not exist in any object element, the element is skipped via
+	// `continue` in the filter loop — all elements are excluded and an empty list is returned.
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// All objects share the same type but the filter key doesn't exist
+				// in any of them — every element is skipped via the `continue` branch.
+				Config: `
+					locals {
+						objects_without_age = [
+							{ name = "alice" },
+							{ name = "bob" },
+						]
+					}
+					output "filter_missing_key" {
+						value = provider::helpers::collection_filter(local.objects_without_age, "age", 30)
+					}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownOutputValue("filter_missing_key", knownvalue.ListSizeExact(0)),
+				},
+			},
+		},
+	})
+}

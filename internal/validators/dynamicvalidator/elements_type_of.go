@@ -2,11 +2,12 @@ package dynamicvalidator
 
 import (
 	"context"
+	"terraform-provider-helpers/internal/utils/xslices"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatorfuncerr"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"terraform-provider-helpers/internal/utils/xslices"
 )
 
 var _ function.DynamicParameterValidator = ElementsOfSameTypeValidator{}
@@ -42,5 +43,4 @@ func (v ElementsOfSameTypeValidator) ValidateParameterDynamic(ctx context.Contex
 			inputValue.String(),
 		)
 	}
-
 }

@@ -211,6 +211,183 @@ func TestConvertInterfaceToTerraformValue(t *testing.T) {
 	})
 }
 
+func TestConvertInterfaceToTerraformValueScalarTypes(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	t.Run("nil input returns DynamicNull", func(t *testing.T) {
+		value, err := convertInterfaceToTerraformValue(ctx, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		dynValue, ok := value.(basetypes.DynamicValue)
+		if !ok || !dynValue.IsNull() {
+			t.Fatalf("expected DynamicNull, got: %T / %v", value, value)
+		}
+	})
+
+	t.Run("bool true", func(t *testing.T) {
+		value, err := convertInterfaceToTerraformValue(ctx, true)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		boolVal, ok := value.(basetypes.BoolValue)
+		if !ok || !boolVal.ValueBool() {
+			t.Fatalf("expected BoolValue(true), got: %T / %v", value, value)
+		}
+	})
+
+	t.Run("bool false", func(t *testing.T) {
+		value, err := convertInterfaceToTerraformValue(ctx, false)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		boolVal, ok := value.(basetypes.BoolValue)
+		if !ok || boolVal.ValueBool() {
+			t.Fatalf("expected BoolValue(false), got: %T / %v", value, value)
+		}
+	})
+
+	t.Run("string value", func(t *testing.T) {
+		value, err := convertInterfaceToTerraformValue(ctx, "hello")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		strVal, ok := value.(basetypes.StringValue)
+		if !ok || strVal.ValueString() != "hello" {
+			t.Fatalf("expected StringValue(hello), got: %T / %v", value, value)
+		}
+	})
+
+	intCases := []struct {
+		name     string
+		input    interface{}
+		expected int64
+	}{
+		{"int", int(10), 10},
+		{"int8", int8(10), 10},
+		{"int16", int16(10), 10},
+		{"int32", int32(10), 10},
+		{"int64", int64(10), 10},
+		{"uint", uint(10), 10},
+		{"uint8", uint8(10), 10},
+		{"uint16", uint16(10), 10},
+		{"uint32", uint32(10), 10},
+	}
+
+	for _, tc := range intCases {
+		t.Run(tc.name, func(t *testing.T) {
+			value, err := convertInterfaceToTerraformValue(ctx, tc.input)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			intVal, ok := value.(basetypes.Int64Value)
+			if !ok || intVal.ValueInt64() != tc.expected {
+				t.Fatalf("expected Int64Value(%d), got: %T / %v", tc.expected, value, value)
+			}
+		})
+	}
+
+	t.Run("float32 integral becomes int64", func(t *testing.T) {
+		value, err := convertInterfaceToTerraformValue(ctx, float32(7.0))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		intVal, ok := value.(basetypes.Int64Value)
+		if !ok || intVal.ValueInt64() != 7 {
+			t.Fatalf("expected Int64Value(7), got: %T / %v", value, value)
+		}
+	})
+
+	t.Run("float32 fractional becomes float64", func(t *testing.T) {
+		value, err := convertInterfaceToTerraformValue(ctx, float32(3.5))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		floatVal, ok := value.(basetypes.Float64Value)
+		if !ok {
+			t.Fatalf("expected Float64Value, got: %T", value)
+		}
+
+		// float32(3.5) converts exactly to float64(3.5)
+		if floatVal.ValueFloat64() != float64(float32(3.5)) {
+			t.Fatalf("unexpected float value: %v", floatVal.ValueFloat64())
+		}
+	})
+}
+
+func TestConvertInterfaceToTerraformValueUnsupportedType(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	t.Run("unsupported type returns error", func(t *testing.T) {
+		_, err := convertInterfaceToTerraformValue(ctx, struct{ Name string }{"test"})
+		if err == nil {
+			t.Fatal("expected error for unsupported struct type")
+		}
+
+		if !strings.Contains(err.Error(), "unsupported data type") {
+			t.Fatalf("expected 'unsupported data type' in error, got: %v", err)
+		}
+	})
+
+	t.Run("nested map with unsupported value propagates error", func(t *testing.T) {
+		input := map[string]interface{}{
+			"valid_key":   "valid-value",
+			"invalid_key": make(chan int),
+		}
+
+		_, err := convertInterfaceToTerraformValue(ctx, input)
+		if err == nil {
+			t.Fatal("expected error for nested unsupported type in map")
+		}
+
+		if !strings.Contains(err.Error(), "failed to convert map value for key") {
+			t.Fatalf("expected map conversion error, got: %v", err)
+		}
+	})
+
+	t.Run("nested list with unsupported element propagates error", func(t *testing.T) {
+		input := []interface{}{
+			"valid-string",
+			make(chan int),
+		}
+
+		_, err := convertInterfaceToTerraformValue(ctx, input)
+		if err == nil {
+			t.Fatal("expected error for nested unsupported type in list")
+		}
+
+		if !strings.Contains(err.Error(), "failed to convert array element at index") {
+			t.Fatalf("expected list conversion error, got: %v", err)
+		}
+	})
+}
+
+func TestConvertToTerraformDynamicValueError(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	_, err := convertToTerraformDynamicValue(ctx, struct{ Ch chan int }{Ch: make(chan int)})
+	if err == nil {
+		t.Fatal("expected error for unsupported type in dynamic conversion")
+	}
+
+	if !strings.Contains(err.Error(), "failed to convert to Terraform value") {
+		t.Fatalf("expected wrapped conversion error, got: %v", err)
+	}
+}
+
 func TestConvertToTerraformDynamicValue(t *testing.T) {
 	t.Parallel()
 
