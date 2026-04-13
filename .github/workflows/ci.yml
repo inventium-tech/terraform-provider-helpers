@@ -50,7 +50,7 @@ jobs:
           DEFAULT_WORKSPACE: ${{ github.workspace }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Archive reports
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ success() || failure() }}
         with:
           name: MegaLinter reports
@@ -83,7 +83,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: unit-tests-report.log
       - name: Upload Test Artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: unit-tests-report-${{ github.sha }}
           path: |
@@ -129,7 +129,7 @@ jobs:
       - name: Set safe TF_VERSION
         run: echo "TF_VERSION_SAFE=$(echo '${{ matrix.tf-version }}' | sed 's/\*/x/g')" >> "$GITHUB_ENV"
       - name: Upload Test Artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: integration-tests-report-tf${{ env.TF_VERSION_SAFE }}-${{ github.sha }}
           path: |
