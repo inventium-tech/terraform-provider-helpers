@@ -1,6 +1,6 @@
 module terraform-provider-helpers
 
-go 1.26
+go 1.26.2
 
 require (
 	github.com/hashicorp/terraform-plugin-docs v0.24.0
@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.31.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
 	github.com/hashicorp/terraform-plugin-testing v1.15.0
-	github.com/kaptinlin/jsonschema v0.7.7
+	github.com/kaptinlin/jsonschema v0.7.8
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -55,9 +55,9 @@ require (
 	github.com/hashicorp/terraform-svchost v0.2.1 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
-	github.com/kaptinlin/go-i18n v0.3.0 // indirect
-	github.com/kaptinlin/jsonpointer v0.4.17 // indirect
-	github.com/kaptinlin/messageformat-go v0.4.19 // indirect
+	github.com/kaptinlin/go-i18n v0.4.1 // indirect
+	github.com/kaptinlin/jsonpointer v0.4.18 // indirect
+	github.com/kaptinlin/messageformat-go v0.4.20 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.21 // indirect
@@ -83,7 +83,7 @@ require (
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
