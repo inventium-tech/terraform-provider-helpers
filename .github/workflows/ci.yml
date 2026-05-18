@@ -43,7 +43,7 @@ jobs:
           version: latest
           args: --config=.linters/.golangci.yml
       - name: MegaLinter
-        uses: oxsecurity/megalinter/flavors/go@8fbdead70d1409964ab3d5afa885e18ee85388bb # v9.4.0
+        uses: oxsecurity/megalinter/flavors/go@0e3ce9b9c8c10effb9b269509cc47ca17cae31c7 # v9.5.0
         id: ml
         env:
           VALIDATE_ALL_CODEBASE: true
@@ -105,7 +105,7 @@ jobs:
       - name: Setup Go
         uses: ./.github/actions/setup-go
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           terraform_version: ${{ matrix.tf-version }}
           terraform_wrapper: false
@@ -173,10 +173,10 @@ jobs:
       - name: Git Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: CodeQL Analysis
-        uses: github/codeql-action/init@e46ed2cbd01164d986452f91f178727624ae40d7 # v4.35.3
+        uses: github/codeql-action/init@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
         with:
           languages: go
       - name: CodeQL Analysis
-        uses: github/codeql-action/analyze@e46ed2cbd01164d986452f91f178727624ae40d7 # v4.35.3
+        uses: github/codeql-action/analyze@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
         with:
           category: '/language:go'
