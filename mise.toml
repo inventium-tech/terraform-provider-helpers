@@ -4,6 +4,7 @@ min_version = "2026.10.4"
 go = "1.27.3"
 prek = "0.5.7"
 gitleaks = "8.30.1"
+"go:mvdan.cc/gofumpt" = "v0.12.0"
 
 [tasks.help]
 description = "List available project tasks"
@@ -19,7 +20,7 @@ run = "go build -v ./..."
 
 [tasks."go:fmt"]
 description = "Format Go source files"
-run = "go fmt ./..."
+run = "gofumpt -w ."
 
 [tasks."go:test"]
 description = "Run Go unit tests"

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/function"
@@ -74,7 +75,7 @@ func (c ObjectSetValueFunction) Run(ctx context.Context, req function.RunRequest
 	attrTypes := objectParsed.AttributeTypes(ctx)
 	attrValues := objectParsed.Attributes()
 
-	var isCurrentValueNull, keyExists = true, false
+	isCurrentValueNull, keyExists := true, false
 
 	if _, ok := attrValues[key]; ok {
 		isCurrentValueNull = attrValues[key].IsNull() || attrValues[key].Equal(basetypes.NewStringValue(""))

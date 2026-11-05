@@ -1,11 +1,12 @@
 package provider
 
 import (
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-	"testing"
 )
 
 type mockTFObjectPartial map[string]knownvalue.Check
@@ -44,9 +45,9 @@ func TestObjectSetValueFunction(t *testing.T) {
 				// test "write_all" operation mode
 				Config: `` +
 					mockTerraformLocalsTestObject + `
-			
+
 					output "expect_value_change" { value = provider::helpers::object_set_value(local.test_object, "key1", "new_value", "write_all") }
-			
+
 					output "expect_new_key" { value = provider::helpers::object_set_value(local.test_object, "new_key", "new_value", "write_all") }
 					`,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -60,9 +61,9 @@ func TestObjectSetValueFunction(t *testing.T) {
 				// test "write_value" operation mode
 				Config: `` +
 					mockTerraformLocalsTestObject + `
-			
+
 					output "expect_value_change" { value = provider::helpers::object_set_value(local.test_object, "key1", "new_value", "write_value") }
-			
+
 					output "expect_no_changes" { value = provider::helpers::object_set_value(local.test_object, "new_key", "new_value", "write_value") }
 					`,
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -80,7 +81,7 @@ func TestObjectSetValueFunction(t *testing.T) {
 					output "expect_value_change_1" { value = provider::helpers::object_set_value(local.test_object, "key4", "new_value", "write_safe") }
 
 					output "expect_value_change_2" { value = provider::helpers::object_set_value(local.test_object, "key5", "new_value", "write_safe") }
-					
+
 					output "expect_no_changes_1" { value = provider::helpers::object_set_value(local.test_object, "key1", "new_value", "write_safe") }
 
 					output "expect_no_changes_2" { value = provider::helpers::object_set_value(local.test_object, "new_key", "new_value", "write_safe") }

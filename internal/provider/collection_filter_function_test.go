@@ -1,11 +1,12 @@
 package provider
 
 import (
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-	"testing"
 )
 
 func TestCollectionFilterFunction(t *testing.T) {
@@ -18,11 +19,11 @@ func TestCollectionFilterFunction(t *testing.T) {
         { key1 = "value3", key2 = true, key3 = 5, key4 = null },
 	    { key1 = "value4", key2 = false, key3 = 1, key4 = { key5 = "value5", key6 = true } },
       ]
-	
+
 	  test_string_array = ["value1", "value2", "value3", "value1"]
-	
+
 	  test_number_array = [5, 8, 3, 5]
-	
+
 	  test_bool_array = [true, false, true]
 	}`
 
@@ -35,7 +36,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			// test filter array of objects
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_object_value_string" {
 				  value = provider::helpers::collection_filter(local.test_object_collection, "key1", "value1")
 				}`,
@@ -53,7 +54,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			},
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_object_bool_value" {
 				  value = provider::helpers::collection_filter(local.test_object_collection, "key2", true)
 				}`,
@@ -77,7 +78,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			},
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_object_number_value" {
 				  value = provider::helpers::collection_filter(local.test_object_collection, "key3", 5)
 				}`,
@@ -95,7 +96,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			},
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_object_null_value" {
 				  value = provider::helpers::collection_filter(local.test_object_collection, "key4", null)
 				}`,
@@ -119,7 +120,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			},
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_object_string_nested_value" {
 				  value = provider::helpers::collection_filter(local.test_object_collection, "key4.key5", "value5")
 				}`,
@@ -140,7 +141,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			},
 			{
 				Config: mockLocals + `
-			
+
 				output "test_no_match_object_string_value" {
 				  value = provider::helpers::collection_filter(local.test_object_collection, "key1", "new_value")
 				}`,
@@ -152,7 +153,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			// test filter array of strings
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_string_array" {
 				  value = provider::helpers::collection_filter(local.test_string_array, "", "value2")
 				}`,
@@ -165,7 +166,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			},
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_string_array" {
 				  value = provider::helpers::collection_filter(local.test_string_array, "", "value1")
 				}`,
@@ -181,7 +182,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			// test filter array of numbers
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_number_array" {
 				  value = provider::helpers::collection_filter(local.test_number_array, "", 3)
 				}`,
@@ -194,7 +195,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			},
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_number_array" {
 				  value = provider::helpers::collection_filter(local.test_number_array, "", 5)
 				}`,
@@ -210,7 +211,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			// test filter bool array
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_bool_array" {
 				  value = provider::helpers::collection_filter(local.test_bool_array, "", false)
 				}`,
@@ -223,7 +224,7 @@ func TestCollectionFilterFunction(t *testing.T) {
 			},
 			{
 				Config: mockLocals + `
-			
+
 				output "test_match_bool_array" {
 				  value = provider::helpers::collection_filter(local.test_bool_array, "", true)
 				}`,

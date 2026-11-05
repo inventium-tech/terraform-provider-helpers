@@ -2,9 +2,10 @@ package provider
 
 import (
 	"context"
+	"os"
+
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"os"
 )
 
 var _ function.Function = &OsCheckEnvFunction{}
