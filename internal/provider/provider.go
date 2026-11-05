@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -10,8 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-var _ provider.Provider = &HelpersProvider{}
-var _ provider.ProviderWithFunctions = &HelpersProvider{}
+var (
+	_ provider.Provider              = &HelpersProvider{}
+	_ provider.ProviderWithFunctions = &HelpersProvider{}
+)
 
 type HelpersProvider struct {
 	// version is set to the provider version on release, "dev" when the

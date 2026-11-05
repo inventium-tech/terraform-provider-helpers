@@ -280,6 +280,12 @@ func TestApplyDefaults(t *testing.T) {
 	if custom["enabled"] != true {
 		t.Fatalf("expected additionalProperties defaults to apply, got: %#v", custom)
 	}
+	if _, exists := target["app"].(map[string]interface{})["name"]; exists {
+		t.Fatal("app defaults must not mutate the input")
+	}
+	if len(target["custom"].(map[string]interface{})) != 0 {
+		t.Fatal("additionalProperties defaults must not mutate the input")
+	}
 }
 
 func TestApplyDefaultsArrayItems(t *testing.T) {
@@ -326,6 +332,111 @@ func TestApplyDefaultsArrayItems(t *testing.T) {
 
 	if second["enabled"] != false {
 		t.Fatalf("expected enabled to remain false in second item, got: %#v", second["enabled"])
+	}
+}
+
+func TestApplyDefaultsResolvesLocalReferences(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]interface{}{
+		"type": "object",
+		"$defs": map[string]interface{}{
+			"client": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"realm":    map[string]interface{}{"type": "string", "default": "2ig"},
+					"settings": map[string]interface{}{"$ref": "#/$defs/settings", "default": map[string]interface{}{}},
+				},
+			},
+			"settings": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"enabled": map[string]interface{}{"type": "boolean", "default": true},
+				},
+			},
+		},
+		"properties": map[string]interface{}{
+			"clients": map[string]interface{}{
+				"type":  "array",
+				"items": map[string]interface{}{"$ref": "#/$defs/client"},
+			},
+		},
+	}
+	target := map[string]interface{}{
+		"clients": []interface{}{map[string]interface{}{"name": "web"}},
+	}
+
+	defaultedValue := applyDefaults(schema, target)
+	defaultedObject := defaultedValue.(map[string]interface{})
+	clients := defaultedObject["clients"].([]interface{})
+	client := clients[0].(map[string]interface{})
+	if client["realm"] != "2ig" {
+		t.Fatalf("expected referenced client default realm, got: %#v", client["realm"])
+	}
+	settings := client["settings"].(map[string]interface{})
+	if settings["enabled"] != true {
+		t.Fatalf("expected nested referenced default, got: %#v", settings)
+	}
+}
+
+func TestApplyDefaultsResolvesLocalReferencesInAllOf(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]interface{}{
+		"type": "object",
+		"$defs": map[string]interface{}{
+			"settings": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"enabled": map[string]interface{}{"type": "boolean", "default": true},
+				},
+			},
+		},
+		"properties": map[string]interface{}{
+			"settings": map[string]interface{}{
+				"allOf": []interface{}{
+					map[string]interface{}{"$ref": "#/$defs/settings"},
+				},
+			},
+		},
+	}
+	target := map[string]interface{}{
+		"settings": map[string]interface{}{},
+	}
+
+	defaultedValue := applyDefaults(schema, target).(map[string]interface{})
+	settings := defaultedValue["settings"].(map[string]interface{})
+	if settings["enabled"] != true {
+		t.Fatalf("expected default from allOf reference, got: %#v", settings["enabled"])
+	}
+}
+
+func TestApplyDefaultsPreservesExplicitNull(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]interface{}{
+		"type": "object",
+		"properties": map[string]interface{}{
+			"mode":   map[string]interface{}{"type": "string", "default": "default-mode"},
+			"nested": map[string]interface{}{"type": "object", "default": map[string]interface{}{"enabled": true}},
+			"items": map[string]interface{}{
+				"type":  "array",
+				"items": map[string]interface{}{"type": "string", "default": "default-item"},
+			},
+		},
+	}
+	target := map[string]interface{}{
+		"mode":   nil,
+		"nested": nil,
+		"items":  []interface{}{nil},
+	}
+
+	defaultedValue := applyDefaults(schema, target).(map[string]interface{})
+	if defaultedValue["mode"] != nil || defaultedValue["nested"] != nil {
+		t.Fatalf("explicit nulls must remain null, got: %#v", defaultedValue)
+	}
+	if items := defaultedValue["items"].([]interface{}); len(items) != 1 || items[0] != nil {
+		t.Fatalf("explicit null array element must remain null, got: %#v", items)
 	}
 }
 
@@ -386,7 +497,7 @@ func TestMaterializedDefaultForMissingProperty(t *testing.T) {
 		}
 	})
 
-	t.Run("object schema without explicit default materializes nested defaults", func(t *testing.T) {
+	t.Run("object schema without explicit default stays absent", func(t *testing.T) {
 		propertySchema := map[string]interface{}{
 			"type": "object",
 			"properties": map[string]interface{}{
@@ -395,13 +506,8 @@ func TestMaterializedDefaultForMissingProperty(t *testing.T) {
 		}
 
 		value, ok := materializedDefaultForMissingProperty(propertySchema)
-		if !ok {
-			t.Fatal("expected materialized default object")
-		}
-
-		asMap := value.(map[string]interface{})
-		if asMap["port"] != 8080 {
-			t.Fatalf("expected port default, got: %#v", asMap)
+		if ok {
+			t.Fatalf("expected no default for an absent object, got: %#v", value)
 		}
 	})
 
@@ -440,6 +546,61 @@ func TestIsObjectSchema(t *testing.T) {
 				t.Fatalf("isObjectSchema(%#v) = %t, expected %t", tc.schema, got, tc.expected)
 			}
 		})
+	}
+}
+
+func TestProcessJSONSchemaValidateOperationalError(t *testing.T) {
+	t.Parallel()
+
+	// An empty schema source is an operational error (not a jsonSchemaValidationError),
+	// so processJSONSchemaValidate must return false AND a non-nil error.
+	ok, err := processJSONSchemaValidate(context.Background(), "", `{"key": "value"}`)
+	if err == nil {
+		t.Fatal("expected error for empty schema source")
+	}
+
+	if ok {
+		t.Fatal("expected false when an operational error occurs")
+	}
+
+	if !strings.Contains(err.Error(), "schema source cannot be empty") {
+		t.Fatalf("unexpected error message: %v", err)
+	}
+}
+
+func TestProcessJSONSchemaValidateValidationFailureReturnsFalseNoError(t *testing.T) {
+	t.Parallel()
+
+	schema := `{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}`
+	// target is missing the required "name" property — validation failure, not an operational error
+	target := `{"age": 30}`
+
+	ok, err := processJSONSchemaValidate(context.Background(), schema, target)
+	if err != nil {
+		t.Fatalf("expected no error for validation failure, got: %v", err)
+	}
+
+	if ok {
+		t.Fatal("expected false for schema validation failure")
+	}
+}
+
+func TestCompileJSONSchemaDocumentMarshalError(t *testing.T) {
+	t.Parallel()
+
+	// A channel value cannot be marshaled to JSON, which exercises the marshal error branch.
+	schemaObject := map[string]interface{}{
+		"type":    "object",
+		"channel": make(chan int),
+	}
+
+	_, err := compileJSONSchemaDocument(context.Background(), schemaObject)
+	if err == nil {
+		t.Fatal("expected error for unmarshalable schema object")
+	}
+
+	if !strings.Contains(err.Error(), "error marshaling schema document") {
+		t.Fatalf("expected marshal error, got: %v", err)
 	}
 }
 

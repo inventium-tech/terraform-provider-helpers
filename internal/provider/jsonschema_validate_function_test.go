@@ -87,6 +87,73 @@ output "is_valid" {
 	})
 }
 
+func TestJsonschemaValidateFunctionExplicitNullDoesNotUseDefault(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+locals {
+  schema = jsonencode({
+    type = "object"
+    properties = {
+      name = { type = "string", default = "default-name" }
+    }
+  })
+  target = jsonencode({ name = null })
+}
+
+output "is_valid" {
+  value = provider::helpers::jsonschema_validate(local.schema, local.target)
+}
+`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownOutputValue("is_valid", knownvalue.Bool(false)),
+				},
+			},
+		},
+	})
+}
+
+func TestJsonschemaValidateFunctionDoesNotDefaultMissingRequiredProperty(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+locals {
+  schema = jsonencode({
+    type = "object"
+    required = ["name"]
+    properties = {
+      name = { type = "string", default = "default-name" }
+    }
+  })
+  target = "{}"
+}
+
+output "is_valid" {
+  value = provider::helpers::jsonschema_validate(local.schema, local.target)
+}
+`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownOutputValue("is_valid", knownvalue.Bool(false)),
+				},
+			},
+		},
+	})
+}
+
 func TestJsonschemaValidateFunctionURLSchemaAndTarget(t *testing.T) {
 	t.Parallel()
 

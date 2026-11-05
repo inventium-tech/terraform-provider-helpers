@@ -9,14 +9,20 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for design context.
 
 Prerequisites:
 
-- Go `1.25.x`
+- mise `2026.10.4` or newer (installs Go `1.27.3`, `prek`, and `gitleaks`)
 - Terraform CLI `>= 1.11`
 
 Typical local bootstrap:
 
 ```sh
-go mod download
+mise install
+mise run go:download
+mise run hooks:install
 ```
+
+Run Go checks with `mise run go:build`, `mise run go:fmt`, `mise run go:test`, `mise run go:vet`, and
+`mise run go:lint`.
+Run the hooks manually with `mise run hooks:check`; formatting and hygiene hooks may update files.
 
 ## Branching Conventions
 

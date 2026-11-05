@@ -13,19 +13,22 @@ permissions:
 jobs:
   semantic-dry-run:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Git Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Setup Node
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 'lts/*'
-      - run: npm install conventional-changelog-conventionalcommits
+      # Preset v10 requires writer v9; release-notes-generator currently uses writer v8.
+      - run: >-
+          npm install --ignore-scripts --no-save --package-lock=false
+          semantic-release@25.0.9 conventional-changelog-conventionalcommits@9.3.1
       - name: Semantic Release (dry-run)
-        run: npx semantic-release --dry-run
+        run: ./node_modules/.bin/semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -33,24 +36,27 @@ jobs:
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/dev') ||
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       released: ${{ steps.detect_release.outputs.released }}
       tag: ${{ steps.detect_release.outputs.tag }}
     steps:
       - name: Git Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Setup Node
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 'lts/*'
-      - run: npm install conventional-changelog-conventionalcommits
+      # Preset v10 requires writer v9; release-notes-generator currently uses writer v8.
+      - run: >-
+          npm install --ignore-scripts --no-save --package-lock=false
+          semantic-release@25.0.9 conventional-changelog-conventionalcommits@9.3.1
       - name: Capture tags on HEAD before release
         run: git tag --points-at HEAD --list 'v*' | sort > /tmp/head-tags-before.txt
       - name: Semantic Release
-        run: npx semantic-release
+        run: ./node_modules/.bin/semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Detect published release tag
@@ -72,11 +78,11 @@ jobs:
 
   goreleaser:
     if: needs.semantic-release.outputs.released == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: semantic-release
     steps:
       - name: Git Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Setup Go
@@ -88,7 +94,7 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
           args: release --clean
         env:

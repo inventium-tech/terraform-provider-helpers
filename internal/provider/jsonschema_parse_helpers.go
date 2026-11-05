@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +26,7 @@ import (
 const (
 	jsonschemaParseFunctionName    = "jsonschema_parse"
 	jsonschemaValidateFunctionName = "jsonschema_validate"
+	jsonSchemaEvaluationFailed     = "evaluation failed"
 )
 
 type jsonSchemaValidationError struct {
@@ -76,12 +79,12 @@ func newJSONSchemaValidationError(validationResult *jsonschema.EvaluationResult)
 
 func formatJSONSchemaValidationDetails(validationResult *jsonschema.EvaluationResult) string {
 	if validationResult == nil {
-		return "evaluation failed"
+		return jsonSchemaEvaluationFailed
 	}
 
 	detailedErrors := validationResult.DetailedErrors()
 	if len(detailedErrors) == 0 {
-		return validationResult.Error()
+		return jsonSchemaEvaluationFailed
 	}
 
 	formattedErrors := make([]string, 0, len(detailedErrors))
@@ -93,7 +96,7 @@ func formatJSONSchemaValidationDetails(validationResult *jsonschema.EvaluationRe
 
 		errorMessage := strings.TrimSpace(message)
 		if errorMessage == "" {
-			errorMessage = validationResult.Error()
+			errorMessage = jsonSchemaEvaluationFailed
 		}
 
 		formattedErrors = append(formattedErrors, fmt.Sprintf("%s: %s", errorPath, errorMessage))
@@ -172,11 +175,15 @@ func processJSONSchemaParse(ctx context.Context, schemaSource string, targetSour
 		"target_parse_format": string(targetParsedDocument.parseFormat),
 	})
 
-	defaultedTarget := applyDefaults(schemaObject, targetParsedDocument.value)
-
-	validationResult := compiledSchema.Validate(defaultedTarget)
+	validationResult := compiledSchema.Validate(targetParsedDocument.value)
 	if !validationResult.IsValid() {
 		return nil, newJSONSchemaValidationError(validationResult)
+	}
+
+	defaultedTarget := applyDefaults(schemaObject, targetParsedDocument.value)
+	defaultedValidationResult := compiledSchema.Validate(defaultedTarget)
+	if !defaultedValidationResult.IsValid() {
+		return nil, newJSONSchemaValidationError(defaultedValidationResult)
 	}
 
 	return defaultedTarget, nil
@@ -216,7 +223,8 @@ func resolveSchemaOrTargetSource(ctx context.Context, source string, sourceRole 
 		return jsonSchemaResolvedSource{data: fileContent, kind: jsonSchemaSourceKindFile}, nil
 	}
 
-	if strings.HasPrefix(trimmedSource, "{") ||
+	if strings.ContainsAny(trimmedSource, "\r\n") ||
+		strings.HasPrefix(trimmedSource, "{") ||
 		strings.HasPrefix(trimmedSource, "[") ||
 		strings.HasPrefix(trimmedSource, "-") ||
 		strings.Contains(trimmedSource, ":") {
@@ -285,7 +293,8 @@ func readURLSource(ctx context.Context, sourceURL string, sourceRole jsonSchemaS
 	if err != nil {
 		return nil, fmt.Errorf("error requesting %s URL '%s': %w", sourceRole.sourceLabel(), sourceURL, err)
 	}
-	defer response.Body.Close()
+	// Closing the response body is best-effort; status and read errors are handled separately.
+	defer func() { _ = response.Body.Close() }()
 
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		return nil, fmt.Errorf("error requesting %s URL '%s': unexpected status code %d", sourceRole.sourceLabel(), sourceURL, response.StatusCode)
@@ -304,7 +313,6 @@ func readURLSource(ctx context.Context, sourceURL string, sourceRole jsonSchemaS
 			"source_label": string(sourceRole),
 			"source_kind":  string(jsonSchemaSourceKindURL),
 			"url_host":     urlHost,
-			"url":          sourceURL,
 			"status_code":  response.StatusCode,
 			"failure_type": "response_read_failed",
 			"error":        err.Error(),
@@ -347,92 +355,225 @@ func readFileSource(path string) ([]byte, error) {
 }
 
 func applyDefaults(schema interface{}, value interface{}) interface{} {
+	return applyDefaultsWithRoot(schema, schema, value, map[string]bool{})
+}
+
+func applyDefaultsWithRoot(root interface{}, schema interface{}, value interface{}, materializedRefs map[string]bool) interface{} {
+	return applyDefaultsWithRefChain(root, schema, value, materializedRefs, map[string]bool{})
+}
+
+func applyDefaultsWithRefChain(root interface{}, schema interface{}, value interface{}, materializedRefs map[string]bool, refChain map[string]bool) interface{} {
 	schemaObject, ok := schema.(map[string]interface{})
 	if !ok {
 		return value
 	}
 
-	if value == nil {
-		if schemaDefault, hasDefault := schemaObject["default"]; hasDefault {
-			value = deepCopyValue(schemaDefault)
+	root = jsonSchemaResourceRoot(root, schemaObject)
+	schemaKey := fmt.Sprintf("%p", schemaObject)
+	if refChain[schemaKey] {
+		return value
+	}
+	refChain[schemaKey] = true
+	defer delete(refChain, schemaKey)
+
+	if reference, hasReference := schemaObject["$ref"].(string); hasReference {
+		if referencedSchema, referencedRoot, found := resolveJSONSchemaReference(root, reference); found {
+			value = applyDefaultsWithRefChain(
+				referencedRoot,
+				referencedSchema,
+				value,
+				materializedRefs,
+				refChain,
+			)
+		}
+	}
+
+	if allOfSchemas, hasAllOf := schemaObject["allOf"].([]interface{}); hasAllOf {
+		for _, allOfSchema := range allOfSchemas {
+			value = applyDefaultsWithRefChain(root, allOfSchema, value, materializedRefs, refChain)
 		}
 	}
 
 	if isObjectSchema(schemaObject) {
-		objectValue := map[string]interface{}{}
-		switch current := value.(type) {
-		case map[string]interface{}:
-			for key, nestedValue := range current {
-				objectValue[key] = nestedValue
-			}
-		case nil:
-			// keep an empty object to allow nested defaults to materialize
-		default:
-			return value
-		}
-
-		properties, _ := schemaObject["properties"].(map[string]interface{})
-		for propertyName, propertySchema := range properties {
-			currentValue, exists := objectValue[propertyName]
-			if !exists || currentValue == nil {
-				if defaultValue, shouldSet := materializedDefaultForMissingProperty(propertySchema); shouldSet {
-					objectValue[propertyName] = defaultValue
-				}
-				continue
-			}
-
-			objectValue[propertyName] = applyDefaults(propertySchema, currentValue)
-		}
-
-		if additionalPropertiesSchema, hasAdditionalSchema := schemaObject["additionalProperties"].(map[string]interface{}); hasAdditionalSchema {
-			for key, nestedValue := range objectValue {
-				if _, declaredProperty := properties[key]; declaredProperty {
-					continue
-				}
-				objectValue[key] = applyDefaults(additionalPropertiesSchema, nestedValue)
-			}
-		}
-
-		return objectValue
+		return applyObjectDefaults(
+			root,
+			schemaObject,
+			value,
+			materializedRefs,
+		)
 	}
 
 	if itemSchema, hasItems := schemaObject["items"]; hasItems {
-		arrayValue, isArray := value.([]interface{})
-		if !isArray {
-			return value
-		}
-
-		defaultedArray := make([]interface{}, len(arrayValue))
-		for index, item := range arrayValue {
-			defaultedArray[index] = applyDefaults(itemSchema, item)
-		}
-
-		return defaultedArray
+		return applyArrayDefaults(
+			root,
+			itemSchema,
+			value,
+			materializedRefs,
+		)
 	}
 
 	return value
 }
 
+func applyObjectDefaults(
+	root interface{},
+	schemaObject map[string]interface{},
+	value interface{},
+	materializedRefs map[string]bool,
+) interface{} {
+	current, ok := value.(map[string]interface{})
+	if !ok {
+		return value
+	}
+
+	objectValue := make(map[string]interface{}, len(current))
+	maps.Copy(objectValue, current)
+	properties, _ := schemaObject["properties"].(map[string]interface{})
+	for propertyName, propertySchema := range properties {
+		currentValue, exists := objectValue[propertyName]
+		switch {
+		case !exists:
+			defaultValue, shouldSet := materializedDefaultForMissingPropertyWithRoot(root, propertySchema, materializedRefs)
+			if shouldSet {
+				objectValue[propertyName] = defaultValue
+			}
+		case currentValue != nil:
+			objectValue[propertyName] = applyDefaultsWithRoot(
+				root,
+				propertySchema,
+				currentValue,
+				materializedRefs,
+			)
+		}
+	}
+
+	additionalPropertiesSchema, hasAdditionalSchema := schemaObject["additionalProperties"].(map[string]interface{})
+	if hasAdditionalSchema {
+		for key, nestedValue := range objectValue {
+			if _, declaredProperty := properties[key]; declaredProperty || nestedValue == nil {
+				continue
+			}
+			objectValue[key] = applyDefaultsWithRoot(
+				root,
+				additionalPropertiesSchema,
+				nestedValue,
+				materializedRefs,
+			)
+		}
+	}
+
+	return objectValue
+}
+
+func applyArrayDefaults(
+	root interface{},
+	itemSchema interface{},
+	value interface{},
+	materializedRefs map[string]bool,
+) interface{} {
+	arrayValue, isArray := value.([]interface{})
+	if !isArray {
+		return value
+	}
+
+	defaultedArray := make([]interface{}, len(arrayValue))
+	for index, item := range arrayValue {
+		if item != nil {
+			defaultedArray[index] = applyDefaultsWithRoot(
+				root,
+				itemSchema,
+				item,
+				materializedRefs,
+			)
+		}
+	}
+
+	return defaultedArray
+}
+
 func materializedDefaultForMissingProperty(propertySchema interface{}) (interface{}, bool) {
+	return materializedDefaultForMissingPropertyWithRoot(propertySchema, propertySchema, map[string]bool{})
+}
+
+func materializedDefaultForMissingPropertyWithRoot(root interface{}, propertySchema interface{}, materializedRefs map[string]bool) (interface{}, bool) {
 	propertySchemaObject, ok := propertySchema.(map[string]interface{})
 	if !ok {
 		return nil, false
 	}
 
+	root = jsonSchemaResourceRoot(root, propertySchemaObject)
+	// Schema identity also catches cycles through allOf without conflating resource-local references.
+	schemaKey := fmt.Sprintf("%p", propertySchemaObject)
+	if materializedRefs[schemaKey] {
+		return nil, false
+	}
+	materializedRefs[schemaKey] = true
+	defer delete(materializedRefs, schemaKey)
+
 	if propertyDefault, hasDefault := propertySchemaObject["default"]; hasDefault {
-		defaultedValue := applyDefaults(propertySchemaObject, deepCopyValue(propertyDefault))
+		defaultedValue := applyDefaultsWithRoot(root, propertySchemaObject, deepCopyValue(propertyDefault), materializedRefs)
 		return defaultedValue, true
 	}
 
-	if isObjectSchema(propertySchemaObject) {
-		materializedObject := applyDefaults(propertySchemaObject, map[string]interface{}{})
-		materializedObjectMap, isMap := materializedObject.(map[string]interface{})
-		if isMap && len(materializedObjectMap) > 0 {
-			return materializedObjectMap, true
+	if reference, hasReference := propertySchemaObject["$ref"].(string); hasReference {
+		referencedSchema, referencedRoot, found := resolveJSONSchemaReference(root, reference)
+		if !found {
+			return nil, false
+		}
+		if defaultValue, shouldSet := materializedDefaultForMissingPropertyWithRoot(referencedRoot, referencedSchema, materializedRefs); shouldSet {
+			return applyDefaultsWithRoot(root, propertySchemaObject, defaultValue, materializedRefs), true
 		}
 	}
 
 	return nil, false
+}
+
+func jsonSchemaResourceRoot(root interface{}, schema interface{}) interface{} {
+	if schemaObject, ok := schema.(map[string]interface{}); ok {
+		if id, ok := schemaObject["$id"].(string); ok && id != "" {
+			return schemaObject
+		}
+	}
+	return root
+}
+
+func resolveJSONSchemaReference(root interface{}, reference string) (interface{}, interface{}, bool) {
+	if !strings.HasPrefix(reference, "#") {
+		return nil, nil, false
+	}
+	fragment, err := url.PathUnescape(strings.TrimPrefix(reference, "#"))
+	if err != nil {
+		return nil, nil, false
+	}
+	if fragment == "" {
+		return root, root, true
+	}
+	if !strings.HasPrefix(fragment, "/") {
+		return nil, nil, false
+	}
+
+	current := root
+	for token := range strings.SplitSeq(strings.TrimPrefix(fragment, "/"), "/") {
+		token = strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")
+		switch value := current.(type) {
+		case map[string]interface{}:
+			current, _ = value[token]
+			if current == nil {
+				return nil, nil, false
+			}
+		case []interface{}:
+			index, err := strconv.Atoi(token)
+			if err != nil || index < 0 || index >= len(value) {
+				return nil, nil, false
+			}
+			current = value[index]
+		default:
+			return nil, nil, false
+		}
+		root = jsonSchemaResourceRoot(root, current)
+	}
+
+	return current, root, true
 }
 
 func isObjectSchema(schemaObject map[string]interface{}) bool {

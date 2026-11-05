@@ -1,12 +1,13 @@
 package provider
 
 import (
+	"os"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-	"os"
-	"testing"
 )
 
 func TestOsCheckEnvFunction(t *testing.T) {

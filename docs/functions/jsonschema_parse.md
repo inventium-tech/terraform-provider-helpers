@@ -302,7 +302,7 @@ output "conditional_metrics_config" {
 ## VALIDATION AND ERROR HANDLING
 
 # The following would cause validation errors if uncommented:
-# 
+#
 # resource "local_file" "invalid_config" {
 #   filename = "${path.module}/invalid_config.yaml"
 #   content = <<-EOT
@@ -311,7 +311,7 @@ output "conditional_metrics_config" {
 #     enabled: true
 #   EOT
 # }
-# 
+#
 # output "invalid_config_parse" {
 #   description = "This would fail validation due to missing required field"
 #   value       = provider::helpers::jsonschema_parse(
@@ -382,14 +382,15 @@ The return type of `jsonschema_parse` is a dynamic object containing parsed and 
 ### Schema Validation
 - The schema source is resolved from URL/path/inline and compiled for validation
 - The target source is resolved from URL/path/inline and parsed as JSON or YAML
-- If validation fails, the function returns an error with details about what failed
+- The authored target is validated before defaults are applied, so defaults do not satisfy missing required properties or replace explicit `null`
+- The defaulted result is validated again; invalid schema defaults return a validation error
 - Supports JSON Schema Draft 2020-12 format
 
 ### Default Value Application
-- Default values defined in the schema are automatically applied to missing properties
-- Nested objects receive defaults recursively
-- Defaults are materialized recursively for nested object schemas (including `default: {}` patterns)
-- Empty objects (`{}`) can still materialize nested defaults where schema defaults define them
+- Schema defaults are applied only to missing properties; explicit `null` values are preserved
+- Defaults apply recursively through inline schemas and local JSON Pointer references
+- An absent optional object is created only when that property has an explicit default, such as `default: {}`
+- Nested defaults apply inside present objects and objects created from an explicit default
 
 ### Source Resolution and Format Detection
 - Resolution order is URL (`http://` or `https://`), then file path lookup, then inline content
@@ -420,7 +421,7 @@ resource "kubernetes_config_map" "app_config" {
   metadata {
     name = "app-config"
   }
-  
+
   data = {
     "config.json" = jsonencode(local.app_config)
   }
@@ -441,7 +442,7 @@ locals {
 resource "helm_release" "microservice" {
   name  = var.service_name
   chart = "./charts/microservice"
-  
+
   values = [
     jsonencode({
       service = local.service_config.service
@@ -458,14 +459,14 @@ Create reusable infrastructure templates with validated configurations:
 ```hcl
 locals {
   infrastructure_config = provider::helpers::jsonschema_parse(
-    "${path.module}/schemas/infrastructure.schema.json", 
+    "${path.module}/schemas/infrastructure.schema.json",
     var.config_file
   )
 }
 
 module "vpc" {
   source = "./modules/vpc"
-  
+
   cidr_block           = local.infrastructure_config.network.vpc_cidr
   availability_zones   = local.infrastructure_config.network.availability_zones
   enable_dns_hostnames = local.infrastructure_config.network.dns_hostnames

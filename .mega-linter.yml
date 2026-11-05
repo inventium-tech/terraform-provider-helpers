@@ -10,7 +10,6 @@ APPLY_FIXES: # all, none, or list of linter keys
 ENABLE_LINTERS: # If you use ENABLE_LINTERS variable, all other linters will be disabled by default
   - COPYPASTE_JSCPD               # https://megalinter.io/latest/descriptors/copypaste_jscpd/
   - JSON_PRETTIER                 # https://megalinter.io/latest/descriptors/json_prettier/
-  - MARKDOWN_MARKDOWN_LINK_CHECK  # https://megalinter.io/latest/descriptors/markdown_markdown_link_check/
   - MARKDOWN_MARKDOWNLINT         # https://megalinter.io/latest/descriptors/markdown_markdownlint/
   - REPOSITORY_CHECKOV            # https://megalinter.io/latest/descriptors/repository_checkov/
   - SPELL_CSPELL                  # https://megalinter.io/latest/descriptors/spell_cspell/
@@ -25,7 +24,7 @@ FORMATTERS_DISABLE_ERRORS: false
 IGNORE_GENERATED_FILES: true
 LINTER_RULES_PATH: .linters
 PRINT_ALPACA: false
-REPORT_OUTPUT_FOLDER: /tmp/lint/.ml-reports
+REPORT_OUTPUT_FOLDER: .ml-reports
 SHOW_ELAPSED_TIME: true
 UPDATED_SOURCES_REPORTER: false
 

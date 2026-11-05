@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"terraform-provider-helpers/internal/utils/xslices"
@@ -22,7 +23,7 @@ func (o ObjectContainsKeysFunction) Metadata(_ context.Context, _ function.Metad
 func (o ObjectContainsKeysFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
 		Summary: "Check if an object contains a target set of keys.",
-		Description: `Returns true if the object contains the specified keys. When strict=true (default), all keys must 
+		Description: `Returns true if the object contains the specified keys. When strict=true (default), all keys must
 		be present. When strict=false, at least one key must be present. Works with both objects and maps.`,
 
 		Parameters: []function.Parameter{

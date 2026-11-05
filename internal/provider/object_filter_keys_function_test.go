@@ -1,11 +1,13 @@
 package provider
 
 import (
+	"regexp"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-	"testing"
 )
 
 func TestObjectFilterKeysFunction(t *testing.T) {
@@ -128,6 +130,29 @@ func TestObjectFilterKeysFunction(t *testing.T) {
 						"owner":   knownvalue.StringExact("team-alpha"),
 					})),
 				},
+			},
+		},
+	})
+}
+
+func TestObjectFilterKeysFunctionNonObjectInput(t *testing.T) {
+	t.Parallel()
+
+	// Passing a tuple/list as the first (dynamic) parameter hits the default branch
+	// in Run, which sets an error "First parameter must be an object or map".
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+					output "filter_keys_non_object" {
+						value = provider::helpers::object_filter_keys(["item1", "item2"], toset(["key"]))
+					}
+				`,
+				ExpectError: regexp.MustCompile(`First\s+parameter must be an object or map`),
 			},
 		},
 	})
