@@ -5,6 +5,7 @@ go = "1.27.3"
 prek = "0.5.7"
 gitleaks = "8.30.1"
 "go:mvdan.cc/gofumpt" = "v0.12.0"
+golangci-lint = "2.15.0"
 
 [tasks.help]
 description = "List available project tasks"
@@ -30,6 +31,10 @@ run = "go test ./... -v"
 [tasks."go:vet"]
 description = "Run go vet across all packages"
 run = "go vet ./..."
+
+[tasks."go:lint"]
+description = "Run golangci-lint across all packages"
+run = "golangci-lint run ./..."
 
 [tasks."hooks:install"]
 description = "Install pre-commit and commit-msg hooks and prepare their environments"

@@ -20,7 +20,8 @@ mise run go:download
 mise run hooks:install
 ```
 
-Run Go checks with `mise run go:build`, `mise run go:fmt`, `mise run go:test`, and `mise run go:vet`.
+Run Go checks with `mise run go:build`, `mise run go:fmt`, `mise run go:test`, `mise run go:vet`, and
+`mise run go:lint`.
 Run the hooks manually with `mise run hooks:check`; formatting and hygiene hooks may update files.
 
 ## Branching Conventions

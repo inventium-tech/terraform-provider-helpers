@@ -290,7 +290,8 @@ func readURLSource(ctx context.Context, sourceURL string, sourceRole jsonSchemaS
 	if err != nil {
 		return nil, fmt.Errorf("error requesting %s URL '%s': %w", sourceRole.sourceLabel(), sourceURL, err)
 	}
-	defer response.Body.Close()
+	// Closing the response body is best-effort; status and read errors are handled separately.
+	defer func() { _ = response.Body.Close() }()
 
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		return nil, fmt.Errorf("error requesting %s URL '%s': unexpected status code %d", sourceRole.sourceLabel(), sourceURL, response.StatusCode)
