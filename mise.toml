@@ -1,0 +1,43 @@
+min_version = "2026.10.4"
+
+[tools]
+go = "1.27.3"
+prek = "0.5.7"
+gitleaks = "8.30.1"
+
+[tasks.help]
+description = "List available project tasks"
+run = "mise tasks ls --local"
+
+[tasks."go:download"]
+description = "Download Go module dependencies"
+run = "go mod download"
+
+[tasks."go:build"]
+description = "Build all Go packages"
+run = "go build -v ./..."
+
+[tasks."go:fmt"]
+description = "Format Go source files"
+run = "go fmt ./..."
+
+[tasks."go:test"]
+description = "Run Go unit tests"
+dir = "{{cwd}}"
+run = "go test ./... -v"
+
+[tasks."go:vet"]
+description = "Run go vet across all packages"
+run = "go vet ./..."
+
+[tasks."hooks:install"]
+description = "Install pre-commit and commit-msg hooks and prepare their environments"
+run = "prek install --config .pre-commit-config.yaml --prepare-hooks --hook-type pre-commit --hook-type commit-msg"
+
+[tasks."hooks:check"]
+description = "Run all hooks on tracked files (format and hygiene hooks may modify files)"
+run = "prek run --config .pre-commit-config.yaml --all-files"
+
+[tasks."hooks:validate"]
+description = "Validate the pre-commit hook configuration"
+run = "prek validate-config .pre-commit-config.yaml"

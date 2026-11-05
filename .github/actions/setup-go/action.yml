@@ -9,13 +9,13 @@ inputs:
   go-version:
     description: Explicit Go version
     required: false
-    default: '1.24'
+    default: '1.27'
 
 runs:
   using: composite
   steps:
     - name: Setup Go environment
-      uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
         go-version-file: ${{ inputs.go-version-file }}
         cache: true

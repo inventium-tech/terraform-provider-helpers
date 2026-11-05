@@ -1,0 +1,57 @@
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+default_stages:
+  - pre-commit
+
+repos:
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.5.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args:
+          - --strict
+          - release
+          - feat
+          - fix
+          - docs
+          - style
+          - refactor
+          - perf
+          - test
+          - ci
+          - chore
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks-system
+        entry: mise exec -- gitleaks git --pre-commit --redact --staged --verbose
+        pass_filenames: false
+        always_run: true
+
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: gofmt
+        entry: mise exec -- gofmt -w
+        language: system
+        types: [go]
+
+      - id: go-vet
+        name: go vet ./...
+        entry: mise exec -- go vet ./...
+        language: system
+        pass_filenames: false
+        types: [go]
