@@ -34,7 +34,7 @@ run = "go vet ./..."
 
 [tasks."go:lint"]
 description = "Run golangci-lint across all packages"
-run = "golangci-lint run ./..."
+run = "golangci-lint run --config=.linters/.golangci.yml ./..."
 
 [tasks."hooks:install"]
 description = "Install pre-commit and commit-msg hooks and prepare their environments"

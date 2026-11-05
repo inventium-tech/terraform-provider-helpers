@@ -37,6 +37,9 @@ issues:
 formatters:
   enable:
     - gofumpt
+  settings:
+    gofumpt:
+      module-path: terraform-provider-helpers
   exclusions:
     generated: lax
     paths:
