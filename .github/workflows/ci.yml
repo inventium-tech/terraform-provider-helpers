@@ -112,7 +112,9 @@ jobs:
       - name: Set safe TF_VERSION
         run: echo "TF_VERSION_SAFE=$(echo '${{ matrix.tf-version }}' | sed 's/\*/x/g')" >> "$GITHUB_ENV"
       - name: Run Integration Tests
-        run: go test ./internal/provider -v -coverprofile="integration-tests-report-${TF_VERSION_SAFE}.lcov" -json > "integration-tests-report-${TF_VERSION_SAFE}.log"
+        run: >-
+          go test ./internal/provider -v -coverprofile="integration-tests-report-${TF_VERSION_SAFE}.lcov"
+          -json > "integration-tests-report-${TF_VERSION_SAFE}.log"
         env:
           TF_ACC: '1'
       - name: Codecov Upload Coverage
