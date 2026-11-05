@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     name: Go Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Git Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -27,7 +27,7 @@ jobs:
 
   lint:
     name: Linters
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build
     permissions:
       issues: write
@@ -54,13 +54,12 @@ jobs:
         if: ${{ success() || failure() }}
         with:
           name: MegaLinter reports
-          path: |
-            .ml-reports/
-            mega-linter.log
+          path: .ml-reports/
+          include-hidden-files: true
 
   unit-tests:
     name: Go Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build
     steps:
       - name: Git Checkout
@@ -78,10 +77,11 @@ jobs:
           flags: unit-tests
       - name: Codecov Upload Test Results
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: unit-tests-report.log
+          report_type: test_results
+          files: unit-tests-report.log
       - name: Upload Test Artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -94,7 +94,7 @@ jobs:
 
   integration-tests:
     name: Go Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build
     strategy:
       matrix:
@@ -109,8 +109,10 @@ jobs:
         with:
           terraform_version: ${{ matrix.tf-version }}
           terraform_wrapper: false
+      - name: Set safe TF_VERSION
+        run: echo "TF_VERSION_SAFE=$(echo '${{ matrix.tf-version }}' | sed 's/\*/x/g')" >> "$GITHUB_ENV"
       - name: Run Integration Tests
-        run: go test ./internal/provider -v -coverprofile=integration-tests-report.lcov -json > integration-tests-report.log
+        run: go test ./internal/provider -v -coverprofile="integration-tests-report-${TF_VERSION_SAFE}.lcov" -json > "integration-tests-report-${TF_VERSION_SAFE}.log"
         env:
           TF_ACC: '1'
       - name: Codecov Upload Coverage
@@ -118,30 +120,29 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
-          files: integration-tests-report.lcov
+          files: integration-tests-report-${{ env.TF_VERSION_SAFE }}.lcov
           flags: integration-tests
       - name: Codecov Upload Test Results
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: integration-tests-report.log
-      - name: Set safe TF_VERSION
-        run: echo "TF_VERSION_SAFE=$(echo '${{ matrix.tf-version }}' | sed 's/\*/x/g')" >> "$GITHUB_ENV"
+          report_type: test_results
+          files: integration-tests-report-${{ env.TF_VERSION_SAFE }}.log
       - name: Upload Test Artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: integration-tests-report-tf${{ env.TF_VERSION_SAFE }}-${{ github.sha }}
           path: |
-            integration-tests-report.lcov
-            integration-tests-report.log
+            integration-tests-report-${{ env.TF_VERSION_SAFE }}.lcov
+            integration-tests-report-${{ env.TF_VERSION_SAFE }}.log
           retention-days: 7
           overwrite: true
 
   sonar:
     name: SonarCloud Scan
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [unit-tests, integration-tests]
     steps:
       - name: Git Checkout
@@ -166,7 +167,7 @@ jobs:
 
   codeql:
     name: CodeQL Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name != 'pull_request'
     needs: build
     steps:
