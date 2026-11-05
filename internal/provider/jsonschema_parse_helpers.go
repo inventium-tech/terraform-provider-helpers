@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -81,7 +82,7 @@ func formatJSONSchemaValidationDetails(validationResult *jsonschema.EvaluationRe
 
 	detailedErrors := validationResult.DetailedErrors()
 	if len(detailedErrors) == 0 {
-		return validationResult.Error()
+		return "evaluation failed"
 	}
 
 	formattedErrors := make([]string, 0, len(detailedErrors))
@@ -93,7 +94,7 @@ func formatJSONSchemaValidationDetails(validationResult *jsonschema.EvaluationRe
 
 		errorMessage := strings.TrimSpace(message)
 		if errorMessage == "" {
-			errorMessage = validationResult.Error()
+			errorMessage = "evaluation failed"
 		}
 
 		formattedErrors = append(formattedErrors, fmt.Sprintf("%s: %s", errorPath, errorMessage))
@@ -172,11 +173,15 @@ func processJSONSchemaParse(ctx context.Context, schemaSource string, targetSour
 		"target_parse_format": string(targetParsedDocument.parseFormat),
 	})
 
-	defaultedTarget := applyDefaults(schemaObject, targetParsedDocument.value)
-
-	validationResult := compiledSchema.Validate(defaultedTarget)
+	validationResult := compiledSchema.Validate(targetParsedDocument.value)
 	if !validationResult.IsValid() {
 		return nil, newJSONSchemaValidationError(validationResult)
+	}
+
+	defaultedTarget := applyDefaults(schemaObject, targetParsedDocument.value)
+	defaultedValidationResult := compiledSchema.Validate(defaultedTarget)
+	if !defaultedValidationResult.IsValid() {
+		return nil, newJSONSchemaValidationError(defaultedValidationResult)
 	}
 
 	return defaultedTarget, nil
@@ -347,14 +352,30 @@ func readFileSource(path string) ([]byte, error) {
 }
 
 func applyDefaults(schema interface{}, value interface{}) interface{} {
+	return applyDefaultsWithRoot(schema, schema, value, map[string]bool{})
+}
+
+func applyDefaultsWithRoot(root interface{}, schema interface{}, value interface{}, materializedRefs map[string]bool) interface{} {
+	return applyDefaultsWithRefChain(root, schema, value, materializedRefs, map[string]bool{})
+}
+
+func applyDefaultsWithRefChain(root interface{}, schema interface{}, value interface{}, materializedRefs map[string]bool, refChain map[string]bool) interface{} {
 	schemaObject, ok := schema.(map[string]interface{})
 	if !ok {
 		return value
 	}
 
-	if value == nil {
-		if schemaDefault, hasDefault := schemaObject["default"]; hasDefault {
-			value = deepCopyValue(schemaDefault)
+	if reference, hasReference := schemaObject["$ref"].(string); hasReference && !refChain[reference] {
+		if referencedSchema, found := resolveJSONSchemaReference(root, reference); found {
+			refChain[reference] = true
+			value = applyDefaultsWithRefChain(root, referencedSchema, value, materializedRefs, refChain)
+			delete(refChain, reference)
+		}
+	}
+
+	if allOfSchemas, hasAllOf := schemaObject["allOf"].([]interface{}); hasAllOf {
+		for _, allOfSchema := range allOfSchemas {
+			value = applyDefaultsWithRefChain(root, allOfSchema, value, materializedRefs, refChain)
 		}
 	}
 
@@ -366,7 +387,7 @@ func applyDefaults(schema interface{}, value interface{}) interface{} {
 				objectValue[key] = nestedValue
 			}
 		case nil:
-			// keep an empty object to allow nested defaults to materialize
+			return nil
 		default:
 			return value
 		}
@@ -374,22 +395,25 @@ func applyDefaults(schema interface{}, value interface{}) interface{} {
 		properties, _ := schemaObject["properties"].(map[string]interface{})
 		for propertyName, propertySchema := range properties {
 			currentValue, exists := objectValue[propertyName]
-			if !exists || currentValue == nil {
-				if defaultValue, shouldSet := materializedDefaultForMissingProperty(propertySchema); shouldSet {
+			if !exists {
+				if defaultValue, shouldSet := materializedDefaultForMissingPropertyWithRoot(root, propertySchema, materializedRefs); shouldSet {
 					objectValue[propertyName] = defaultValue
 				}
 				continue
 			}
+			if currentValue == nil {
+				continue
+			}
 
-			objectValue[propertyName] = applyDefaults(propertySchema, currentValue)
+			objectValue[propertyName] = applyDefaultsWithRoot(root, propertySchema, currentValue, materializedRefs)
 		}
 
 		if additionalPropertiesSchema, hasAdditionalSchema := schemaObject["additionalProperties"].(map[string]interface{}); hasAdditionalSchema {
 			for key, nestedValue := range objectValue {
-				if _, declaredProperty := properties[key]; declaredProperty {
+				if _, declaredProperty := properties[key]; declaredProperty || nestedValue == nil {
 					continue
 				}
-				objectValue[key] = applyDefaults(additionalPropertiesSchema, nestedValue)
+				objectValue[key] = applyDefaultsWithRoot(root, additionalPropertiesSchema, nestedValue, materializedRefs)
 			}
 		}
 
@@ -404,7 +428,11 @@ func applyDefaults(schema interface{}, value interface{}) interface{} {
 
 		defaultedArray := make([]interface{}, len(arrayValue))
 		for index, item := range arrayValue {
-			defaultedArray[index] = applyDefaults(itemSchema, item)
+			if item == nil {
+				defaultedArray[index] = nil
+			} else {
+				defaultedArray[index] = applyDefaultsWithRoot(root, itemSchema, item, materializedRefs)
+			}
 		}
 
 		return defaultedArray
@@ -414,25 +442,78 @@ func applyDefaults(schema interface{}, value interface{}) interface{} {
 }
 
 func materializedDefaultForMissingProperty(propertySchema interface{}) (interface{}, bool) {
+	return materializedDefaultForMissingPropertyWithRoot(propertySchema, propertySchema, map[string]bool{})
+}
+
+func materializedDefaultForMissingPropertyWithRoot(root interface{}, propertySchema interface{}, materializedRefs map[string]bool) (interface{}, bool) {
 	propertySchemaObject, ok := propertySchema.(map[string]interface{})
 	if !ok {
 		return nil, false
 	}
 
 	if propertyDefault, hasDefault := propertySchemaObject["default"]; hasDefault {
-		defaultedValue := applyDefaults(propertySchemaObject, deepCopyValue(propertyDefault))
+		if reference, hasReference := propertySchemaObject["$ref"].(string); hasReference {
+			if materializedRefs[reference] {
+				return nil, false
+			}
+			materializedRefs[reference] = true
+			defer delete(materializedRefs, reference)
+		}
+		defaultedValue := applyDefaultsWithRoot(root, propertySchemaObject, deepCopyValue(propertyDefault), materializedRefs)
 		return defaultedValue, true
 	}
 
-	if isObjectSchema(propertySchemaObject) {
-		materializedObject := applyDefaults(propertySchemaObject, map[string]interface{}{})
-		materializedObjectMap, isMap := materializedObject.(map[string]interface{})
-		if isMap && len(materializedObjectMap) > 0 {
-			return materializedObjectMap, true
+	if reference, hasReference := propertySchemaObject["$ref"].(string); hasReference {
+		if materializedRefs[reference] {
+			return nil, false
+		}
+		referencedSchema, found := resolveJSONSchemaReference(root, reference)
+		if !found {
+			return nil, false
+		}
+		materializedRefs[reference] = true
+		defer delete(materializedRefs, reference)
+		if defaultValue, shouldSet := materializedDefaultForMissingPropertyWithRoot(root, referencedSchema, materializedRefs); shouldSet {
+			return defaultValue, true
 		}
 	}
 
 	return nil, false
+}
+
+func resolveJSONSchemaReference(root interface{}, reference string) (interface{}, bool) {
+	if reference == "#" {
+		return root, true
+	}
+	if !strings.HasPrefix(reference, "#/") {
+		return nil, false
+	}
+
+	current := root
+	for _, token := range strings.Split(strings.TrimPrefix(reference, "#/"), "/") {
+		token, err := url.PathUnescape(token)
+		if err != nil {
+			return nil, false
+		}
+		token = strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")
+		switch value := current.(type) {
+		case map[string]interface{}:
+			current, _ = value[token]
+			if current == nil {
+				return nil, false
+			}
+		case []interface{}:
+			index, err := strconv.Atoi(token)
+			if err != nil || index < 0 || index >= len(value) {
+				return nil, false
+			}
+			current = value[index]
+		default:
+			return nil, false
+		}
+	}
+
+	return current, true
 }
 
 func isObjectSchema(schemaObject map[string]interface{}) bool {

@@ -72,6 +72,121 @@ output "parsed" {
 	})
 }
 
+func TestJsonschemaParseFunctionHeterogeneousArrayItems(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+locals {
+  schema = <<-SCHEMA
+type: object
+properties:
+  clients:
+    type: array
+    items:
+      type: object
+      properties:
+        oidc:
+          type: string
+        saml:
+          type: boolean
+SCHEMA
+
+  target = <<-TARGET
+clients:
+  - oidc: web
+  - saml: true
+TARGET
+
+  parsed = provider::helpers::jsonschema_parse(local.schema, local.target)
+}
+
+output "oidc" {
+  value = local.parsed.clients[0].oidc
+}
+
+output "saml" {
+  value = local.parsed.clients[1].saml
+}
+`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownOutputValue("oidc", knownvalue.StringExact("web")),
+					statecheck.ExpectKnownOutputValue("saml", knownvalue.Bool(true)),
+				},
+			},
+		},
+	})
+}
+
+func TestJsonschemaParseFunctionDoesNotDefaultExplicitNull(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+locals {
+  schema = jsonencode({
+    type = "object"
+    properties = {
+      name = { type = "string", default = "default-name" }
+    }
+  })
+  target = jsonencode({ name = null })
+}
+
+output "parsed" {
+  value = provider::helpers::jsonschema_parse(local.schema, local.target)
+}
+`,
+				ExpectError: regexp.MustCompile(`schema\s+validation failed`),
+			},
+		},
+	})
+}
+
+func TestJsonschemaParseFunctionDoesNotDefaultMissingRequiredProperty(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+locals {
+  schema = jsonencode({
+    type = "object"
+    required = ["name"]
+    properties = {
+      name = { type = "string", default = "default-name" }
+    }
+  })
+  target = "{}"
+}
+
+output "parsed" {
+  value = provider::helpers::jsonschema_parse(local.schema, local.target)
+}
+`,
+				ExpectError: regexp.MustCompile(`schema\s+validation failed`),
+			},
+		},
+	})
+}
+
 func TestJsonschemaParseFunctionFilePathSchemaAndTarget(t *testing.T) {
 	testDirectory := t.TempDir()
 	t.Setenv("PWD", testDirectory)

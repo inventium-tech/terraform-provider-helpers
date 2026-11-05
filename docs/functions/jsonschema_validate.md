@@ -90,5 +90,6 @@ The return type of `jsonschema_validate` is a boolean:
 
 - Input resolution order: URL (`http://` or `https://`), then file path, then inline content.
 - JSON parsing is attempted first, then YAML parsing.
+- Validates the authored target before defaults are applied; defaults do not satisfy missing required properties or replace explicit `null`.
 - Returns `false` only for schema validation mismatches.
 - Returns an error for operational failures (source access errors, malformed schema, malformed JSON/YAML, or internal processing errors).

@@ -102,25 +102,23 @@ func convertInterfaceToTerraformValue(ctx context.Context, data interface{}) (at
 
 		return objectValue, nil
 	case []interface{}:
-		if len(typedValue) == 0 {
-			return types.ListValueMust(types.DynamicType, []attr.Value{}), nil
-		}
-
 		elements := make([]attr.Value, len(typedValue))
+		elementTypes := make([]attr.Type, len(typedValue))
 		for index, item := range typedValue {
 			convertedValue, err := convertInterfaceToTerraformValue(ctx, item)
 			if err != nil {
 				return types.DynamicNull(), fmt.Errorf("failed to convert array element at index %d: %w", index, err)
 			}
-			elements[index] = basetypes.NewDynamicValue(convertedValue)
+			elements[index] = convertedValue
+			elementTypes[index] = convertedValue.Type(ctx)
 		}
 
-		listValue, diags := types.ListValue(types.DynamicType, elements)
+		tupleValue, diags := types.TupleValue(elementTypes, elements)
 		if diags.HasError() {
-			return types.DynamicNull(), fmt.Errorf("failed to create list value: %s", diags.Errors())
+			return types.DynamicNull(), fmt.Errorf("failed to create tuple value: %s", diags.Errors())
 		}
 
-		return listValue, nil
+		return tupleValue, nil
 	default:
 		return types.DynamicNull(), fmt.Errorf("unsupported data type: %T", data)
 	}
