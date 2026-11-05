@@ -12,6 +12,7 @@ forcetypeassert
 ghaction
 gitea
 goarch
+gofumpt
 gofmt
 golangci
 gomod
@@ -31,6 +32,7 @@ megalinter
 nilerr
 oxsecurity
 predeclared
+prek
 providerserver
 refucktor
 releaserc

@@ -36,6 +36,10 @@ run = "go vet ./..."
 description = "Run golangci-lint across all packages"
 run = "golangci-lint run --config=.linters/.golangci.yml ./..."
 
+[tasks.megalinter]
+description = "Run MegaLinter in Docker (configured autofixes may modify files)"
+run = 'docker run --rm -v "$PWD:/tmp/lint:rw" -e VALIDATE_ALL_CODEBASE=true ghcr.io/oxsecurity/megalinter-go:v10.2.0'
+
 [tasks."hooks:install"]
 description = "Install pre-commit and commit-msg hooks and prepare their environments"
 run = "prek install --config .pre-commit-config.yaml --prepare-hooks --hook-type pre-commit --hook-type commit-msg"
