@@ -24,9 +24,11 @@ jobs:
         with:
           node-version: 'lts/*'
       # Preset v10 requires writer v9; release-notes-generator currently uses writer v8.
-      - run: npm install conventional-changelog-conventionalcommits@9.3.1
+      - run: >-
+          npm install --ignore-scripts --no-save --package-lock=false
+          semantic-release@25.0.9 conventional-changelog-conventionalcommits@9.3.1
       - name: Semantic Release (dry-run)
-        run: npx semantic-release --dry-run
+        run: ./node_modules/.bin/semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -48,11 +50,13 @@ jobs:
         with:
           node-version: 'lts/*'
       # Preset v10 requires writer v9; release-notes-generator currently uses writer v8.
-      - run: npm install conventional-changelog-conventionalcommits@9.3.1
+      - run: >-
+          npm install --ignore-scripts --no-save --package-lock=false
+          semantic-release@25.0.9 conventional-changelog-conventionalcommits@9.3.1
       - name: Capture tags on HEAD before release
         run: git tag --points-at HEAD --list 'v*' | sort > /tmp/head-tags-before.txt
       - name: Semantic Release
-        run: npx semantic-release
+        run: ./node_modules/.bin/semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Detect published release tag

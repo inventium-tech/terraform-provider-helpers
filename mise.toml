@@ -6,6 +6,7 @@ prek = "0.5.7"
 gitleaks = "8.30.1"
 "go:mvdan.cc/gofumpt" = "v0.12.0"
 golangci-lint = "2.15.0"
+sonarqube-cli = "1.11.0.16877"
 
 [tasks.help]
 description = "List available project tasks"

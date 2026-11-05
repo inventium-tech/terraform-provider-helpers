@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,6 +26,7 @@ import (
 const (
 	jsonschemaParseFunctionName    = "jsonschema_parse"
 	jsonschemaValidateFunctionName = "jsonschema_validate"
+	jsonSchemaEvaluationFailed     = "evaluation failed"
 )
 
 type jsonSchemaValidationError struct {
@@ -77,12 +79,12 @@ func newJSONSchemaValidationError(validationResult *jsonschema.EvaluationResult)
 
 func formatJSONSchemaValidationDetails(validationResult *jsonschema.EvaluationResult) string {
 	if validationResult == nil {
-		return "evaluation failed"
+		return jsonSchemaEvaluationFailed
 	}
 
 	detailedErrors := validationResult.DetailedErrors()
 	if len(detailedErrors) == 0 {
-		return "evaluation failed"
+		return jsonSchemaEvaluationFailed
 	}
 
 	formattedErrors := make([]string, 0, len(detailedErrors))
@@ -94,7 +96,7 @@ func formatJSONSchemaValidationDetails(validationResult *jsonschema.EvaluationRe
 
 		errorMessage := strings.TrimSpace(message)
 		if errorMessage == "" {
-			errorMessage = "evaluation failed"
+			errorMessage = jsonSchemaEvaluationFailed
 		}
 
 		formattedErrors = append(formattedErrors, fmt.Sprintf("%s: %s", errorPath, errorMessage))
@@ -381,65 +383,100 @@ func applyDefaultsWithRefChain(root interface{}, schema interface{}, value inter
 	}
 
 	if isObjectSchema(schemaObject) {
-		objectValue := map[string]interface{}{}
-		switch current := value.(type) {
-		case map[string]interface{}:
-			for key, nestedValue := range current {
-				objectValue[key] = nestedValue
-			}
-		case nil:
-			return nil
-		default:
-			return value
-		}
-
-		properties, _ := schemaObject["properties"].(map[string]interface{})
-		for propertyName, propertySchema := range properties {
-			currentValue, exists := objectValue[propertyName]
-			if !exists {
-				if defaultValue, shouldSet := materializedDefaultForMissingPropertyWithRoot(root, propertySchema, materializedRefs); shouldSet {
-					objectValue[propertyName] = defaultValue
-				}
-				continue
-			}
-			if currentValue == nil {
-				continue
-			}
-
-			objectValue[propertyName] = applyDefaultsWithRoot(root, propertySchema, currentValue, materializedRefs)
-		}
-
-		if additionalPropertiesSchema, hasAdditionalSchema := schemaObject["additionalProperties"].(map[string]interface{}); hasAdditionalSchema {
-			for key, nestedValue := range objectValue {
-				if _, declaredProperty := properties[key]; declaredProperty || nestedValue == nil {
-					continue
-				}
-				objectValue[key] = applyDefaultsWithRoot(root, additionalPropertiesSchema, nestedValue, materializedRefs)
-			}
-		}
-
-		return objectValue
+		return applyObjectDefaults(
+			root,
+			schemaObject,
+			value,
+			materializedRefs,
+		)
 	}
 
 	if itemSchema, hasItems := schemaObject["items"]; hasItems {
-		arrayValue, isArray := value.([]interface{})
-		if !isArray {
-			return value
-		}
-
-		defaultedArray := make([]interface{}, len(arrayValue))
-		for index, item := range arrayValue {
-			if item == nil {
-				defaultedArray[index] = nil
-			} else {
-				defaultedArray[index] = applyDefaultsWithRoot(root, itemSchema, item, materializedRefs)
-			}
-		}
-
-		return defaultedArray
+		return applyArrayDefaults(
+			root,
+			itemSchema,
+			value,
+			materializedRefs,
+		)
 	}
 
 	return value
+}
+
+func applyObjectDefaults(
+	root interface{},
+	schemaObject map[string]interface{},
+	value interface{},
+	materializedRefs map[string]bool,
+) interface{} {
+	current, ok := value.(map[string]interface{})
+	if !ok {
+		return value
+	}
+
+	objectValue := make(map[string]interface{}, len(current))
+	maps.Copy(objectValue, current)
+	properties, _ := schemaObject["properties"].(map[string]interface{})
+	for propertyName, propertySchema := range properties {
+		currentValue, exists := objectValue[propertyName]
+		switch {
+		case !exists:
+			defaultValue, shouldSet := materializedDefaultForMissingPropertyWithRoot(root, propertySchema, materializedRefs)
+			if shouldSet {
+				objectValue[propertyName] = defaultValue
+			}
+		case currentValue != nil:
+			objectValue[propertyName] = applyDefaultsWithRoot(
+				root,
+				propertySchema,
+				currentValue,
+				materializedRefs,
+			)
+		}
+	}
+
+	additionalPropertiesSchema, hasAdditionalSchema := schemaObject["additionalProperties"].(map[string]interface{})
+	if hasAdditionalSchema {
+		for key, nestedValue := range objectValue {
+			if _, declaredProperty := properties[key]; declaredProperty || nestedValue == nil {
+				continue
+			}
+			objectValue[key] = applyDefaultsWithRoot(
+				root,
+				additionalPropertiesSchema,
+				nestedValue,
+				materializedRefs,
+			)
+		}
+	}
+
+	return objectValue
+}
+
+func applyArrayDefaults(
+	root interface{},
+	itemSchema interface{},
+	value interface{},
+	materializedRefs map[string]bool,
+) interface{} {
+	arrayValue, isArray := value.([]interface{})
+	if !isArray {
+		return value
+	}
+
+	defaultedArray := make([]interface{}, len(arrayValue))
+	for index, item := range arrayValue {
+		if item != nil {
+			defaultedArray[index] = applyDefaultsWithRoot(
+				root,
+				itemSchema,
+				item,
+				materializedRefs,
+			)
+		}
+	}
+
+	return defaultedArray
 }
 
 func materializedDefaultForMissingProperty(propertySchema interface{}) (interface{}, bool) {

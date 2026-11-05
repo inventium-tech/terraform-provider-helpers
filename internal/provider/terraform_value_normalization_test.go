@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
@@ -204,113 +205,40 @@ func TestConvertInterfaceToTerraformValueScalarTypes(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-
-	t.Run("nil input returns DynamicNull", func(t *testing.T) {
-		value, err := convertInterfaceToTerraformValue(ctx, nil)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		dynValue, ok := value.(basetypes.DynamicValue)
-		if !ok || !dynValue.IsNull() {
-			t.Fatalf("expected DynamicNull, got: %T / %v", value, value)
-		}
-	})
-
-	t.Run("bool true", func(t *testing.T) {
-		value, err := convertInterfaceToTerraformValue(ctx, true)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		boolVal, ok := value.(basetypes.BoolValue)
-		if !ok || !boolVal.ValueBool() {
-			t.Fatalf("expected BoolValue(true), got: %T / %v", value, value)
-		}
-	})
-
-	t.Run("bool false", func(t *testing.T) {
-		value, err := convertInterfaceToTerraformValue(ctx, false)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		boolVal, ok := value.(basetypes.BoolValue)
-		if !ok || boolVal.ValueBool() {
-			t.Fatalf("expected BoolValue(false), got: %T / %v", value, value)
-		}
-	})
-
-	t.Run("string value", func(t *testing.T) {
-		value, err := convertInterfaceToTerraformValue(ctx, "hello")
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		strVal, ok := value.(basetypes.StringValue)
-		if !ok || strVal.ValueString() != "hello" {
-			t.Fatalf("expected StringValue(hello), got: %T / %v", value, value)
-		}
-	})
-
-	intCases := []struct {
+	testCases := []struct {
 		name     string
 		input    interface{}
-		expected int64
+		expected attr.Value
 	}{
-		{"int", int(10), 10},
-		{"int8", int8(10), 10},
-		{"int16", int16(10), 10},
-		{"int32", int32(10), 10},
-		{"int64", int64(10), 10},
-		{"uint", uint(10), 10},
-		{"uint8", uint8(10), 10},
-		{"uint16", uint16(10), 10},
-		{"uint32", uint32(10), 10},
+		{name: "nil input returns DynamicNull", input: nil, expected: basetypes.NewDynamicNull()},
+		{name: "bool true", input: true, expected: basetypes.NewBoolValue(true)},
+		{name: "bool false", input: false, expected: basetypes.NewBoolValue(false)},
+		{name: "string value", input: "hello", expected: basetypes.NewStringValue("hello")},
+		{name: "int", input: int(10), expected: basetypes.NewInt64Value(10)},
+		{name: "int8", input: int8(10), expected: basetypes.NewInt64Value(10)},
+		{name: "int16", input: int16(10), expected: basetypes.NewInt64Value(10)},
+		{name: "int32", input: int32(10), expected: basetypes.NewInt64Value(10)},
+		{name: "int64", input: int64(10), expected: basetypes.NewInt64Value(10)},
+		{name: "uint", input: uint(10), expected: basetypes.NewInt64Value(10)},
+		{name: "uint8", input: uint8(10), expected: basetypes.NewInt64Value(10)},
+		{name: "uint16", input: uint16(10), expected: basetypes.NewInt64Value(10)},
+		{name: "uint32", input: uint32(10), expected: basetypes.NewInt64Value(10)},
+		{name: "float32 integral becomes int64", input: float32(7.0), expected: basetypes.NewInt64Value(7)},
+		{name: "float32 fractional becomes float64", input: float32(3.5), expected: basetypes.NewFloat64Value(3.5)},
 	}
 
-	for _, tc := range intCases {
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			value, err := convertInterfaceToTerraformValue(ctx, tc.input)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			intVal, ok := value.(basetypes.Int64Value)
-			if !ok || intVal.ValueInt64() != tc.expected {
-				t.Fatalf("expected Int64Value(%d), got: %T / %v", tc.expected, value, value)
+			if !value.Equal(tc.expected) {
+				t.Fatalf("expected %T / %v, got: %T / %v", tc.expected, tc.expected, value, value)
 			}
 		})
 	}
-
-	t.Run("float32 integral becomes int64", func(t *testing.T) {
-		value, err := convertInterfaceToTerraformValue(ctx, float32(7.0))
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		intVal, ok := value.(basetypes.Int64Value)
-		if !ok || intVal.ValueInt64() != 7 {
-			t.Fatalf("expected Int64Value(7), got: %T / %v", value, value)
-		}
-	})
-
-	t.Run("float32 fractional becomes float64", func(t *testing.T) {
-		value, err := convertInterfaceToTerraformValue(ctx, float32(3.5))
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		floatVal, ok := value.(basetypes.Float64Value)
-		if !ok {
-			t.Fatalf("expected Float64Value, got: %T", value)
-		}
-
-		// float32(3.5) converts exactly to float64(3.5)
-		if floatVal.ValueFloat64() != float64(float32(3.5)) {
-			t.Fatalf("unexpected float value: %v", floatVal.ValueFloat64())
-		}
-	})
 }
 
 func TestConvertInterfaceToTerraformValueUnsupportedType(t *testing.T) {

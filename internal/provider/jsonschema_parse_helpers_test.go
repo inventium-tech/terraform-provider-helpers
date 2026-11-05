@@ -280,6 +280,12 @@ func TestApplyDefaults(t *testing.T) {
 	if custom["enabled"] != true {
 		t.Fatalf("expected additionalProperties defaults to apply, got: %#v", custom)
 	}
+	if _, exists := target["app"].(map[string]interface{})["name"]; exists {
+		t.Fatal("app defaults must not mutate the input")
+	}
+	if len(target["custom"].(map[string]interface{})) != 0 {
+		t.Fatal("additionalProperties defaults must not mutate the input")
+	}
 }
 
 func TestApplyDefaultsArrayItems(t *testing.T) {
