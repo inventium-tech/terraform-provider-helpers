@@ -223,7 +223,8 @@ func resolveSchemaOrTargetSource(ctx context.Context, source string, sourceRole 
 		return jsonSchemaResolvedSource{data: fileContent, kind: jsonSchemaSourceKindFile}, nil
 	}
 
-	if strings.HasPrefix(trimmedSource, "{") ||
+	if strings.ContainsAny(trimmedSource, "\r\n") ||
+		strings.HasPrefix(trimmedSource, "{") ||
 		strings.HasPrefix(trimmedSource, "[") ||
 		strings.HasPrefix(trimmedSource, "-") ||
 		strings.Contains(trimmedSource, ":") {
@@ -312,7 +313,6 @@ func readURLSource(ctx context.Context, sourceURL string, sourceRole jsonSchemaS
 			"source_label": string(sourceRole),
 			"source_kind":  string(jsonSchemaSourceKindURL),
 			"url_host":     urlHost,
-			"url":          sourceURL,
 			"status_code":  response.StatusCode,
 			"failure_type": "response_read_failed",
 			"error":        err.Error(),
@@ -368,11 +368,23 @@ func applyDefaultsWithRefChain(root interface{}, schema interface{}, value inter
 		return value
 	}
 
-	if reference, hasReference := schemaObject["$ref"].(string); hasReference && !refChain[reference] {
-		if referencedSchema, found := resolveJSONSchemaReference(root, reference); found {
-			refChain[reference] = true
-			value = applyDefaultsWithRefChain(root, referencedSchema, value, materializedRefs, refChain)
-			delete(refChain, reference)
+	root = jsonSchemaResourceRoot(root, schemaObject)
+	schemaKey := fmt.Sprintf("%p", schemaObject)
+	if refChain[schemaKey] {
+		return value
+	}
+	refChain[schemaKey] = true
+	defer delete(refChain, schemaKey)
+
+	if reference, hasReference := schemaObject["$ref"].(string); hasReference {
+		if referencedSchema, referencedRoot, found := resolveJSONSchemaReference(root, reference); found {
+			value = applyDefaultsWithRefChain(
+				referencedRoot,
+				referencedSchema,
+				value,
+				materializedRefs,
+				refChain,
+			)
 		}
 	}
 
@@ -489,69 +501,79 @@ func materializedDefaultForMissingPropertyWithRoot(root interface{}, propertySch
 		return nil, false
 	}
 
+	root = jsonSchemaResourceRoot(root, propertySchemaObject)
+	// Schema identity also catches cycles through allOf without conflating resource-local references.
+	schemaKey := fmt.Sprintf("%p", propertySchemaObject)
+	if materializedRefs[schemaKey] {
+		return nil, false
+	}
+	materializedRefs[schemaKey] = true
+	defer delete(materializedRefs, schemaKey)
+
 	if propertyDefault, hasDefault := propertySchemaObject["default"]; hasDefault {
-		if reference, hasReference := propertySchemaObject["$ref"].(string); hasReference {
-			if materializedRefs[reference] {
-				return nil, false
-			}
-			materializedRefs[reference] = true
-			defer delete(materializedRefs, reference)
-		}
 		defaultedValue := applyDefaultsWithRoot(root, propertySchemaObject, deepCopyValue(propertyDefault), materializedRefs)
 		return defaultedValue, true
 	}
 
 	if reference, hasReference := propertySchemaObject["$ref"].(string); hasReference {
-		if materializedRefs[reference] {
-			return nil, false
-		}
-		referencedSchema, found := resolveJSONSchemaReference(root, reference)
+		referencedSchema, referencedRoot, found := resolveJSONSchemaReference(root, reference)
 		if !found {
 			return nil, false
 		}
-		materializedRefs[reference] = true
-		defer delete(materializedRefs, reference)
-		if defaultValue, shouldSet := materializedDefaultForMissingPropertyWithRoot(root, referencedSchema, materializedRefs); shouldSet {
-			return defaultValue, true
+		if defaultValue, shouldSet := materializedDefaultForMissingPropertyWithRoot(referencedRoot, referencedSchema, materializedRefs); shouldSet {
+			return applyDefaultsWithRoot(root, propertySchemaObject, defaultValue, materializedRefs), true
 		}
 	}
 
 	return nil, false
 }
 
-func resolveJSONSchemaReference(root interface{}, reference string) (interface{}, bool) {
-	if reference == "#" {
-		return root, true
+func jsonSchemaResourceRoot(root interface{}, schema interface{}) interface{} {
+	if schemaObject, ok := schema.(map[string]interface{}); ok {
+		if id, ok := schemaObject["$id"].(string); ok && id != "" {
+			return schemaObject
+		}
 	}
-	if !strings.HasPrefix(reference, "#/") {
-		return nil, false
+	return root
+}
+
+func resolveJSONSchemaReference(root interface{}, reference string) (interface{}, interface{}, bool) {
+	if !strings.HasPrefix(reference, "#") {
+		return nil, nil, false
+	}
+	fragment, err := url.PathUnescape(strings.TrimPrefix(reference, "#"))
+	if err != nil {
+		return nil, nil, false
+	}
+	if fragment == "" {
+		return root, root, true
+	}
+	if !strings.HasPrefix(fragment, "/") {
+		return nil, nil, false
 	}
 
 	current := root
-	for _, token := range strings.Split(strings.TrimPrefix(reference, "#/"), "/") {
-		token, err := url.PathUnescape(token)
-		if err != nil {
-			return nil, false
-		}
+	for token := range strings.SplitSeq(strings.TrimPrefix(fragment, "/"), "/") {
 		token = strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")
 		switch value := current.(type) {
 		case map[string]interface{}:
 			current, _ = value[token]
 			if current == nil {
-				return nil, false
+				return nil, nil, false
 			}
 		case []interface{}:
 			index, err := strconv.Atoi(token)
 			if err != nil || index < 0 || index >= len(value) {
-				return nil, false
+				return nil, nil, false
 			}
 			current = value[index]
 		default:
-			return nil, false
+			return nil, nil, false
 		}
+		root = jsonSchemaResourceRoot(root, current)
 	}
 
-	return current, true
+	return current, root, true
 }
 
 func isObjectSchema(schemaObject map[string]interface{}) bool {
